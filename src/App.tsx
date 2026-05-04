@@ -14,6 +14,7 @@ import {
   Maximize,
   Minimize,
   Clock,
+  BookOpen,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -753,11 +754,14 @@ export default function App() {
          setTimeLeft(data.timerMinutes * 60);
       }
 
-      // If we joined halfway and question bank is empty locally
-      if (questionBankRef.current.length === 0 && data.questionBank) {
-        questionBankRef.current = data.questionBank;
-        setQuestionBank(data.questionBank);
-        availableQRef.current = [...data.questionBank];
+      // Always use the question bank from the active game
+      if (data.questionBank) {
+        // Only update if it actually changed to prevent infinite re-renders
+        if (JSON.stringify(questionBankRef.current) !== JSON.stringify(data.questionBank)) {
+          questionBankRef.current = data.questionBank;
+          setQuestionBank(data.questionBank);
+          availableQRef.current = [...data.questionBank];
+        }
       }
 
       // Sync players
@@ -1012,6 +1016,9 @@ export default function App() {
     availableQRef.current = [...questionBankRef.current].sort(
       () => Math.random() - 0.5,
     );
+    if (gameId && isHost) {
+      updateDoc(doc(db, "games", gameId), { questionBank: availableQRef.current, questionIndex: 0 }).catch(console.error);
+    }
     setTq("");
     setTo0("");
     setTo1("");
@@ -1083,6 +1090,9 @@ export default function App() {
       availableQRef.current = [...questionBankRef.current].sort(
         () => Math.random() - 0.5,
       );
+      if (gameId && isHost) {
+          updateDoc(doc(db, "games", gameId), { questionBank: availableQRef.current, questionIndex: 0 }).catch(console.error);
+      }
       alert(`Imported ${newQuestions.length} questions successfully!`);
       setBulkText("");
     } else {
@@ -1108,19 +1118,23 @@ export default function App() {
 
   const clearQuestions = () => {
     if (
-      confirm(
+      window.confirm(
         "Are you sure you want to clear all questions? You'll need to add new ones!",
       )
     ) {
       questionBankRef.current = [];
       setQuestionBank([]);
       availableQRef.current = [];
+      if (gameId && isHost) {
+          updateDoc(doc(db, "games", gameId), { questionBank: [], questionIndex: 0 }).catch(console.error);
+      }
+      alert("All questions wiped successfully.");
     }
   };
 
   const endAllGames = async () => {
     if (
-      confirm(
+      window.confirm(
         "Are you sure you want to stop and end ALL active games for all players?"
       )
     ) {
@@ -1799,6 +1813,20 @@ export default function App() {
                     </button>
                   </div>
                 </div>
+
+                {/* GAME RULES CARD */}
+                <div className="bg-slate-800 rounded-3xl p-5 sm:p-6 border border-slate-700 shadow-xl flex flex-col shrink-0">
+                  <h3 className="text-sm font-black mb-4 text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-2 shrink-0">
+                    <BookOpen size={16} /> Game Rules
+                  </h3>
+                  <div className="text-[11px] text-slate-400 space-y-3 leading-relaxed">
+                    <p><strong className="text-slate-200">Objective:</strong> Race against others to be the first to reach the final tile (100).</p>
+                    <p><strong className="text-slate-200">Snakes:</strong> If you land on the head of a snake, you will slide down to its tail.</p>
+                    <p><strong className="text-slate-200">Ladders:</strong> If you land at the base of a ladder, you will climb up to its top.</p>
+                    <p><strong className="text-slate-200">Trees (Questions):</strong> Landing on a tree prompts a multiple-choice question from the Question Bank. You must answer it correctly to proceed safely!</p>
+                  </div>
+                </div>
+
               </div>
 
               {/* RIGHT COLUMN: Live Dashboard & Ranking & Requests */}
