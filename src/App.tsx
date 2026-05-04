@@ -2491,7 +2491,7 @@ export default function App() {
                         left: `calc(${c.x / 10}% + ${(players.filter((x) => x.pos === p.pos).indexOf(p) - (players.filter((x) => x.pos === p.pos).length - 1) / 2) * 8}px)`,
                         top: `calc(${c.y / 10}% + ${(players.filter((x) => x.pos === p.pos).indexOf(p) - (players.filter((x) => x.pos === p.pos).length - 1) / 2) * 8}px)`,
                         transform: "translate(-50%, -50%)",
-                        transition: "all 0.4s ease-in-out",
+                        transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
                       }}
                     >
                       {isCounting ? (
