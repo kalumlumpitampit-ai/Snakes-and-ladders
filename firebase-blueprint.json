@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Game": {
+      "title": "Game",
+      "description": "A multiplayer game instance",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "User ID of the game host"
+        },
+        "gameState": {
+          "type": "string",
+          "enum": ["setup", "playing", "finished"]
+        },
+        "timerMinutes": {
+          "type": "number"
+        },
+        "startedAt": {
+          "type": "number",
+          "description": "Timestamp when game started, or 0"
+        },
+        "currentTurn": {
+          "type": "number",
+          "description": "Index of the current player's turn"
+        },
+        "players": {
+          "type": "array",
+          "description": "Array of connected players (max 5)"
+        },
+        "questions": {
+          "type": "array",
+          "description": "Array of question objects (can be simplified)"
+        },
+        "lastRoll": {
+          "type": "number",
+          "description": "The last dice roll value"
+        },
+        "turnStatus": {
+          "type": "string",
+          "enum": ["rolling", "moving", "question", "evaluating", "waiting"]
+        },
+        "questionData": {
+          "type": "string",
+          "description": "JSON string of question or null"
+        }
+      },
+      "required": ["hostId", "gameState", "timerMinutes", "players"]
+    }
+  },
+  "firestore": {
+    "games/{gameId}": {
+      "schema": {
+        "$ref": "#/entities/Game"
+      },
+      "description": "Stores multiplayer game sessions"
+    }
+  }
+}

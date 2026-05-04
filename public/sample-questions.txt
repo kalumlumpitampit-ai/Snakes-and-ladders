@@ -1,0 +1,349 @@
+What is the capital of France?
+A. Rome
+B. Madrid
+C. Paris
+D. Berlin
+Answer: C
+
+Which planet is known as the Red Planet?
+A. Venus
+B. Mars
+C. Jupiter
+D. Saturn
+Answer: B
+
+What is the largest ocean on Earth?
+A. Atlantic Ocean
+B. Indian Ocean
+C. Arctic Ocean
+D. Pacific Ocean
+Answer: D
+
+Who wrote "Romeo and Juliet"?
+A. Charles Dickens
+B. William Shakespeare
+C. Jane Austen
+D. Mark Twain
+Answer: B
+
+What is the chemical symbol for gold?
+A. Au
+B. Ag
+C. Fe
+D. Cu
+Answer: A
+
+What is the hardest natural substance on Earth?
+A. Gold
+B. Iron
+C. Diamond
+D. Platinum
+Answer: C
+
+Which country is known as the Land of the Rising Sun?
+A. China
+B. South Korea
+C. Japan
+D. Thailand
+Answer: C
+
+How many continents are there in the world?
+A. 5
+B. 6
+C. 7
+D. 8
+Answer: C
+
+What is the longest river in the world?
+A. Amazon River
+B. Nile River
+C. Yangtze River
+D. Mississippi River
+Answer: B
+
+Who painted the Mona Lisa?
+A. Vincent van Gogh
+B. Pablo Picasso
+C. Leonardo da Vinci
+D. Michelangelo
+Answer: C
+
+What is the smallest country in the world?
+A. Monaco
+B. Nauru
+C. Vatican City
+D. San Marino
+Answer: C
+
+What gas do plants absorb from the atmosphere?
+A. Oxygen
+B. Carbon Dioxide
+C. Nitrogen
+D. Hydrogen
+Answer: B
+
+In what year did the Titanic sink?
+A. 1905
+B. 1912
+C. 1918
+D. 1923
+Answer: B
+
+Which animal is known as the King of the Jungle?
+A. Elephant
+B. Tiger
+C. Lion
+D. Bear
+Answer: C
+
+What is the main ingredient in guacamole?
+A. Tomato
+B. Onion
+C. Avocado
+D. Pepper
+Answer: C
+
+Who was the first person to walk on the moon?
+A. Buzz Aldrin
+B. Yuri Gagarin
+C. Neil Armstrong
+D. Michael Collins
+Answer: C
+
+What is the capital city of Australia?
+A. Sydney
+B. Melbourne
+C. Canberra
+D. Brisbane
+Answer: C
+
+Which is the largest internal organ in the human body?
+A. Heart
+B. Brain
+C. Liver
+D. Lungs
+Answer: C
+
+What is the primary language spoken in Brazil?
+A. Spanish
+B. Portuguese
+C. English
+D. French
+Answer: B
+
+How many bones are there in the adult human body?
+A. 206
+B. 210
+C. 214
+D. 218
+Answer: A
+
+What is the tallest mountain in the world?
+A. K2
+B. Mount Kilimanjaro
+C. Mount Everest
+D. Mount Fuji
+Answer: C
+
+Who discovered electricity?
+A. Isaac Newton
+B. Albert Einstein
+C. Benjamin Franklin
+D. Thomas Edison
+Answer: C
+
+What is the currency of Japan?
+A. Yuan
+B. Won
+C. Yen
+D. Ringgit
+Answer: C
+
+Which planet is closest to the Sun?
+A. Venus
+B. Mercury
+C. Earth
+D. Mars
+Answer: B
+
+What is the largest desert in the world?
+A. Sahara Desert
+B. Arabian Desert
+C. Gobi Desert
+D. Antarctic Desert
+Answer: D
+
+Who is the author of the Harry Potter series?
+A. J.R.R. Tolkien
+B. J.K. Rowling
+C. George R.R. Martin
+D. C.S. Lewis
+Answer: B
+
+What is the highest grossing film of all time?
+A. Titanic
+B. Avatar
+C. Avengers: Endgame
+D. Star Wars: The Force Awakens
+Answer: B
+
+Which element has the atomic number 1?
+A. Helium
+B. Oxygen
+C. Hydrogen
+D. Carbon
+Answer: C
+
+What does DNA stand for?
+A. Deoxyribonucleic Acid
+B. Ribonucleic Acid
+C. Dinucleic Acid
+D. Dioxyribonucleic Acid
+Answer: A
+
+What is the capital of Canada?
+A. Toronto
+B. Vancouver
+C. Montreal
+D. Ottawa
+Answer: D
+
+In chess, which piece can only move diagonally?
+A. Rook
+B. Knight
+C. Bishop
+D. Pawn
+Answer: C
+
+What is the official language of Egypt?
+A. Arabic
+B. French
+C. English
+D. Spanish
+Answer: A
+
+Which geometric shape has 8 sides?
+A. Hexagon
+B. Heptagon
+C. Octagon
+D. Nonagon
+Answer: C
+
+What is the freezing point of water in Fahrenheit?
+A. 0
+B. 32
+C. 100
+D. 212
+Answer: B
+
+Who painted the Starry Night?
+A. Claude Monet
+B. Vincent van Gogh
+C. Pablo Picasso
+D. Salvador Dali
+Answer: B
+
+Which country gifted the Statue of Liberty to the USA?
+A. UK
+B. Spain
+C. France
+D. Germany
+Answer: C
+
+What is the square root of 144?
+A. 10
+B. 11
+C. 12
+D. 14
+Answer: C
+
+Who is known as the father of modern physics?
+A. Isaac Newton
+B. Galileo Galilei
+C. Albert Einstein
+D. Nikola Tesla
+Answer: C
+
+What is the world's fastest land animal?
+A. Cheetah
+B. Lion
+C. Greyhound
+D. Ostrich
+Answer: A
+
+Which programming language is predominantly used for making web pages interactive?
+A. Python
+B. Java
+C. JavaScript
+D. C++
+Answer: C
+
+What is the main language spoken in Argentina?
+A. Portuguese
+B. Spanish
+C. English
+D. Italian
+Answer: B
+
+In which year did World War II end?
+A. 1941
+B. 1943
+C. 1945
+D. 1947
+Answer: C
+
+What is the scientific name for water?
+A. CO2
+B. H2O
+C. O2
+D. NaCl
+Answer: B
+
+Which part of the plant conducts photosynthesis?
+A. Root
+B. Stem
+C. Leaf
+D. Flower
+Answer: C
+
+Which ocean lies on the east coast of the United States?
+A. Pacific Ocean
+B. Atlantic Ocean
+C. Indian Ocean
+D. Arctic Ocean
+Answer: B
+
+What is the largest mammal in the world?
+A. Elephant
+B. Blue Whale
+C. Giraffe
+D. Rhinoceros
+Answer: B
+
+Who invented the telephone?
+A. Alexander Graham Bell
+B. Thomas Edison
+C. Nikola Tesla
+D. Guglielmo Marconi
+Answer: A
+
+What is the chemical symbol for iron?
+A. Ir
+B. Fe
+C. In
+D. Io
+Answer: B
+
+What is the smallest continent by land area?
+A. Europe
+B. Antarctica
+C. Australia
+D. South America
+Answer: C
+
+Which organ is responsible for pumping blood throughout the body?
+A. Brain
+B. Liver
+C. Lungs
+D. Heart
+Answer: D
