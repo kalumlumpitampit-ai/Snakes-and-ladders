@@ -2665,9 +2665,9 @@ export default function App() {
                         transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
                       }}
                     >
-                      {isCounting ? (
-                        <div className={`absolute ${p.pos > 90 ? "-bottom-10" : "-top-10"} left-1/2 -translate-x-1/2 bg-white text-black font-black text-xl px-2 py-0.5 rounded-full shadow-xl border-2 border-black z-[100] animate-[bounce_0.5s_infinite]`}>
-                          {stepCount.count}
+                      {isCounting || p.pos > 90 ? (
+                        <div className={`absolute ${p.pos > 90 ? "-bottom-10" : "-top-10"} left-1/2 -translate-x-1/2 bg-white text-black font-black text-xl px-2 py-0.5 rounded-full shadow-xl border-2 border-black z-[100] ${isCounting ? "animate-[bounce_0.5s_infinite]" : "scale-75 origin-top"}`}>
+                          {isCounting ? stepCount!.count : p.pos}
                         </div>
                       ) : null}
                       {p.id + 1}
