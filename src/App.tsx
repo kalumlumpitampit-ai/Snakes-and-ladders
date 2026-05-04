@@ -15,6 +15,7 @@ import {
   Minimize,
   Clock,
   BookOpen,
+  HelpCircle,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -873,6 +874,7 @@ export default function App() {
   const [isRolling, setIsRolling] = useState(false);
 
   const [supportOpen, setSupportOpen] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [zoomedQR, setZoomedQR] = useState(false);
   const [showBigDice, setShowBigDice] = useState(false);
 
@@ -2077,6 +2079,15 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden bg-gradient-to-br from-green-200 to-blue-200 py-10"
           >
+            {/* Rules Button */}
+            <button
+              onClick={() => setRulesOpen(true)}
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-white/60 hover:bg-white text-green-700 p-3 rounded-full shadow-lg border-2 border-white/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center z-50 gap-2 font-black text-xs uppercase tracking-wider"
+            >
+              <HelpCircle size={20} className="drop-shadow-sm" />
+              <span className="hidden sm:inline">How to Play</span>
+            </button>
+
             <motion.div 
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -2779,6 +2790,83 @@ export default function App() {
               <p className="text-center text-white/50 font-bold mt-4 uppercase tracking-widest">
                 Tap anywhere to close
               </p>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Game Rules Modal */}
+        {rulesOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[400] p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white/95 rounded-[2.5rem] w-full max-w-md flex flex-col p-8 sm:p-10 shadow-2xl relative overflow-hidden items-center border-[6px] border-emerald-400"
+            >
+              <button
+                onClick={() => setRulesOpen(false)}
+                className="absolute top-6 right-6 text-emerald-900/40 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all"
+              >
+                <X size={24} className="stroke-[3]" />
+              </button>
+
+              <div className="absolute -top-10 -right-10 text-9xl opacity-10">🐍</div>
+              <div className="absolute -bottom-10 -left-10 text-9xl opacity-10">🪜</div>
+
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6 shadow-inner relative z-10">
+                 <BookOpen className="w-10 h-10 text-emerald-500" />
+                 <div className="absolute top-0 right-0 w-6 h-6 bg-yellow-400 rounded-full border-4 border-white"></div>
+              </div>
+              
+              <h2 className="text-2xl sm:text-3xl font-black text-emerald-800 mb-8 uppercase tracking-widest text-center relative z-10 flex flex-col items-center">
+                <span className="text-xs text-emerald-600 mb-1 tracking-[0.3em]">Welcome to</span>
+                How to Play!
+              </h2>
+
+              <div className="w-full flex gap-4 text-left relative z-10 flex-col mb-8 font-sans">
+                <div className="flex items-start gap-4">
+                   <div className="text-3xl mt-0.5 filter drop-shadow-sm">🏁</div>
+                   <div>
+                     <h4 className="font-black text-slate-800 uppercase tracking-wider text-[10px] mb-0.5 text-emerald-600">The Goal</h4>
+                     <p className="text-slate-600 text-sm font-bold leading-snug">Race your friends and reach the final tile (100) before anyone else!</p>
+                   </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                   <div className="text-3xl mt-0.5 filter drop-shadow-sm">🪜</div>
+                   <div>
+                     <h4 className="font-black text-slate-800 uppercase tracking-wider text-[10px] mb-0.5 text-blue-600">Ladders</h4>
+                     <p className="text-slate-600 text-sm font-bold leading-snug">Land at the bottom of a ladder to instantly climb way up high!</p>
+                   </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                   <div className="text-3xl mt-0.5 filter drop-shadow-sm">🐍</div>
+                   <div>
+                     <h4 className="font-black text-slate-800 uppercase tracking-wider text-[10px] mb-0.5 text-red-600">Snakes</h4>
+                     <p className="text-slate-600 text-sm font-bold leading-snug">Uh oh! Landing on a snake's head means sliding all the way down.</p>
+                   </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                   <div className="text-3xl mt-0.5 filter drop-shadow-sm">🌳</div>
+                   <div>
+                     <h4 className="font-black text-slate-800 uppercase tracking-wider text-[10px] mb-0.5 text-amber-600">Trees of Knowledge</h4>
+                     <p className="text-slate-600 text-sm font-bold leading-snug">Answer a trivia question correctly to stay safe... or move back down!</p>
+                   </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setRulesOpen(false)}
+                className="bg-emerald-500 hover:bg-emerald-400 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-[0_10px_20px_rgba(16,185,129,0.4)] uppercase tracking-[0.2em] hover:-translate-y-1 active:translate-y-0 text-sm w-full relative z-10"
+              >
+                Let's Go!
+              </button>
             </motion.div>
           </motion.div>
         )}
