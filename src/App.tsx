@@ -45,6 +45,7 @@ const colors: ColorOpt[] = [
   { name: "Blue Team", hex: "#3b82f6", bg: "bg-blue-500" },
   { name: "Yellow Team", hex: "#eab308", bg: "bg-yellow-500" },
   { name: "Purple Team", hex: "#a855f7", bg: "bg-purple-500" },
+  { name: "Orange Team", hex: "#f97316", bg: "bg-orange-500" },
 ];
 
 const snakes = [
@@ -883,6 +884,7 @@ export default function App() {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [zoomedQR, setZoomedQR] = useState(false);
   const [showBigDice, setShowBigDice] = useState(false);
+  const [localCpuCount, setLocalCpuCount] = useState(1);
 
   const [stepCount, setStepCount] = useState<{
     id: number;
@@ -1170,7 +1172,7 @@ export default function App() {
     setPlayers([...playersRef.current]);
   };
 
-  const startGame = async (humanTeamIndex: number, isMultiplayer = false) => {
+  const startGame = async (humanTeamIndex: number, isMultiplayer = false, cpuCount = 4) => {
     audio.init();
     if (questionBankRef.current.length === 0) {
       alert("Teacher! Please add at least one question in the Teacher Panel first.");
@@ -1179,7 +1181,8 @@ export default function App() {
     availableQRef.current = [...questionBankRef.current].sort(() => Math.random() - 0.5);
     questionIndexRef.current = 0;
     const pArr: Player[] = [];
-    for (let i = 0; i < colors.length; i++) {
+    const totalPlayers = isMultiplayer ? colors.length : 1 + cpuCount;
+    for (let i = 0; i < totalPlayers; i++) {
       pArr.push({
         id: i,
         name: colors[i].name,
@@ -2233,9 +2236,28 @@ export default function App() {
                         <div className="flex-grow border-t border-indigo-200"></div>
                       </div>
 
-                      <button onClick={() => startGame(0, false)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-xl transition-all shadow-sm uppercase tracking-wider text-sm flex items-center justify-center gap-2">
-                        <User size={16} /> Play Local Mode (vs CPU)
-                      </button>
+                      <div className="bg-slate-800/5 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
+                             <User size={14} className="text-indigo-500" />
+                             Play vs CPU
+                          </span>
+                          <select 
+                            value={localCpuCount}
+                            onChange={(e) => setLocalCpuCount(Number(e.target.value))}
+                            className="bg-white border border-indigo-200 text-indigo-800 text-xs font-black rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-400 shadow-sm"
+                          >
+                            <option value={1}>1 CPU</option>
+                            <option value={2}>2 CPUs</option>
+                            <option value={3}>3 CPUs</option>
+                            <option value={4}>4 CPUs</option>
+                            <option value={5}>5 CPUs</option>
+                          </select>
+                        </div>
+                        <button onClick={() => startGame(0, false, localCpuCount)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs flex items-center justify-center gap-2">
+                          <User size={16} /> Start Local Game
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>
