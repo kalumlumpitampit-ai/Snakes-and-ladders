@@ -258,6 +258,13 @@ class AudioService {
       gain.gain.linearRampToValueAtTime(0, now + 0.3);
       osc.start(now);
       osc.stop(now + 0.3);
+    } else if (type === "tick") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(800, now);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+      osc.start(now);
+      osc.stop(now + 0.05);
     } else if (type === "win") {
       osc.type = "triangle";
       [440, 554.37, 659.25, 880].forEach((freq, i) => {
@@ -288,7 +295,9 @@ export default function App() {
   const [currentTurn, setCurrentTurn] = useState<number>(0);
   const [isMoving, setIsMoving] = useState<boolean>(false);
   const [timerMinutes, setTimerMinutes] = useState<number>(0);
+  const [questionTimerSeconds, setQuestionTimerSeconds] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState<number | null>(null);
   const [boardThemeId, setBoardThemeId] = useState<string>("classic");
   const [snakeCount, setSnakeCount] = useState<number | "">(12);
   const [treeCount, setTreeCount] = useState<number | "">(16);
@@ -516,6 +525,7 @@ export default function App() {
           hostId: user.uid,
           gameState: "setup",
           timerMinutes: timerMinutes,
+          questionTimerSeconds: questionTimerSeconds,
           startedAt: null,
           currentTurn: 0,
           players: [],
@@ -605,6 +615,7 @@ export default function App() {
       hostId: user.uid,
       gameState: "setup",
       timerMinutes: timerMinutes,
+      questionTimerSeconds: questionTimerSeconds,
       startedAt: null,
       currentTurn: 0,
       players: [],
@@ -750,6 +761,7 @@ export default function App() {
       if (data.boardThemeId) setBoardThemeId(data.boardThemeId);
       if (data.snakeCount !== undefined) setSnakeCount(data.snakeCount);
       if (data.treeCount !== undefined) setTreeCount(data.treeCount);
+      if (data.questionTimerSeconds !== undefined) setQuestionTimerSeconds(data.questionTimerSeconds);
       if (data.startedAt) startedAtRef.current = data.startedAt;
 
       if (data.startedAt && !timeLeft && data.timerMinutes > 0 && !data.timeUp) {
@@ -885,6 +897,53 @@ export default function App() {
   const [zoomedQR, setZoomedQR] = useState(false);
   const [showBigDice, setShowBigDice] = useState(false);
   const [localCpuCount, setLocalCpuCount] = useState(1);
+  const [hasSavedGame, setHasSavedGame] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("savedLocalGame")) {
+      setHasSavedGame(true);
+    }
+  }, [gameState]);
+
+  const saveLocalGame = () => {
+    if (gameActiveRef.current && !gameId) {
+      const state = {
+        players: playersRef.current,
+        currentTurn,
+        timeLeft,
+        boardThemeId,
+        snakeCount,
+        treeCount,
+        timerMinutes,
+        questionTimerSeconds,
+        availableQ: availableQRef.current,
+        questionIndex: questionIndexRef.current,
+      };
+      localStorage.setItem("savedLocalGame", JSON.stringify(state));
+      setHasSavedGame(true);
+    }
+  };
+
+  const resumeLocalGame = () => {
+    const saved = localStorage.getItem("savedLocalGame");
+    if (saved) {
+      const state = JSON.parse(saved);
+      playersRef.current = state.players;
+      setPlayers(state.players);
+      setCurrentTurn(state.currentTurn);
+      setTimeLeft(state.timeLeft);
+      setBoardThemeId(state.boardThemeId);
+      setSnakeCount(state.snakeCount);
+      setTreeCount(state.treeCount);
+      setTimerMinutes(state.timerMinutes);
+      setQuestionTimerSeconds(state.questionTimerSeconds);
+      availableQRef.current = state.availableQ;
+      questionIndexRef.current = state.questionIndex;
+      gameActiveRef.current = true;
+      setGameState("playing");
+      setHasSavedGame(true);
+    }
+  };
 
   const [stepCount, setStepCount] = useState<{
     id: number;
@@ -931,6 +990,39 @@ export default function App() {
     }
     return () => clearInterval(interval);
   }, [gameState, timeLeft, winModal.open]);
+
+  useEffect(() => {
+    let interval: any;
+    if (
+      qModal.open &&
+      questionTimeLeft !== null &&
+      questionTimeLeft > 0
+    ) {
+      interval = setInterval(() => {
+        setQuestionTimeLeft((prev) => {
+          if (prev && prev <= 6 && prev >= 1) {
+             audio.init();
+             audio.play("tick");
+          }
+          if (prev && prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev ? prev - 1 : 0;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [qModal.open, questionTimeLeft]);
+
+  useEffect(() => {
+    if (qModal.open && questionTimeLeft === 0 && !qFeedback) {
+       // Time up
+       if (qModal.resolve) {
+          qModal.resolve(false);
+       }
+    }
+  }, [questionTimeLeft, qModal.open, qFeedback, qModal.resolve]);
 
   useEffect(() => {
     if (timeLeft === 0 && gameState === "playing" && !winModal.open) {
@@ -1209,6 +1301,7 @@ export default function App() {
           players: pArr,
           currentTurn: 0,
           timerMinutes,
+          questionTimerSeconds,
           questionBank: questionBankRef.current,
           boardThemeId,
           snakeCount,
@@ -1272,6 +1365,7 @@ export default function App() {
       }
 
       const finishQuestion = async (correct: boolean) => {
+          setQuestionTimeLeft(null);
           setQFeedback(correct ? "correct" : "wrong");
           audio.play(correct ? "correct" : "wrong");
           await sleep(2000);
@@ -1284,6 +1378,9 @@ export default function App() {
 
       if (mode === "human") {
           setQModal({ open: true, qData: currentQData, resolve: finishQuestion, cpName });
+          if (questionTimerSeconds > 0) {
+              setQuestionTimeLeft(questionTimerSeconds);
+          }
       } else if (mode === "cpu") {
           setQModal({ open: true, qData: currentQData, resolve: null, cpName });
           setTimeout(() => {
@@ -1352,6 +1449,11 @@ export default function App() {
     if (!multiplayerSyncingRef.current) audio.play("win");
     gameActiveRef.current = false;
     setWinModal({ open: true, winner: player, timeUp });
+
+    if (!gameId) {
+       localStorage.removeItem("savedLocalGame");
+       setHasSavedGame(false);
+    }
 
     if (isHost || !gameId) {
       const durationMinutes = Math.round((Date.now() - (startedAtRef.current || Date.now())) / 60000);
@@ -1686,22 +1788,37 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700 mb-5">
-                    <h4 className="text-[10px] font-black mb-3 text-slate-400 uppercase tracking-widest">
-                      Game Timer
-                    </h4>
-                    <select
-                      value={timerMinutes}
-                      onChange={(e) => setTimerMinutes(parseInt(e.target.value))}
-                      className="w-full p-3 border border-slate-600 rounded-xl text-sm bg-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold appearance-none cursor-pointer"
-                    >
-                      <option value="0">No Timer (Infinite)</option>
-                      <option value="2">2 Minutes</option>
-                      <option value="3">3 Minutes</option>
-                      <option value="4">4 Minutes</option>
-                      <option value="5">5 Minutes</option>
-                      <option value="10">10 Minutes</option>
-                    </select>
+                  <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700 mb-5 text-[10px] font-black text-slate-400 uppercase tracking-widest flex flex-col gap-4">
+                    <div>
+                      <h4 className="mb-3">Game Timer</h4>
+                      <select
+                        value={timerMinutes}
+                        onChange={(e) => setTimerMinutes(parseInt(e.target.value))}
+                        className="w-full p-3 border border-slate-600 rounded-xl text-sm bg-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold appearance-none cursor-pointer"
+                      >
+                        <option value="0">No Timer (Infinite)</option>
+                        <option value="2">2 Minutes</option>
+                        <option value="3">3 Minutes</option>
+                        <option value="4">4 Minutes</option>
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                      </select>
+                    </div>
+                    <div>
+                      <h4 className="mb-3">Question Timer</h4>
+                      <select
+                        value={questionTimerSeconds}
+                        onChange={(e) => setQuestionTimerSeconds(parseInt(e.target.value))}
+                        className="w-full p-3 border border-slate-600 rounded-xl text-sm bg-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold appearance-none cursor-pointer"
+                      >
+                        <option value="0">No Timer</option>
+                        <option value="10">10 Seconds</option>
+                        <option value="15">15 Seconds</option>
+                        <option value="20">20 Seconds</option>
+                        <option value="30">30 Seconds</option>
+                        <option value="60">60 Seconds</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700 mb-5">
@@ -2257,6 +2374,11 @@ export default function App() {
                         <button onClick={() => startGame(0, false, localCpuCount)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs flex items-center justify-center gap-2">
                           <User size={16} /> Start Local Game
                         </button>
+                        {hasSavedGame && (
+                          <button onClick={resumeLocalGame} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs flex items-center justify-center gap-2">
+                            <Clock size={16} /> Resume Saved Game
+                          </button>
+                        )}
                       </div>
                     </>
                   )}
@@ -2601,8 +2723,8 @@ export default function App() {
               </button>
             </div>
 
-            {user?.email === "teachertechsolution@gmail.com" && (
-              <div className="flex flex-row lg:flex-col gap-2 order-2 w-full">
+            {user?.email === "teachertechsolution@gmail.com" && gameId !== null && (
+              <div className="flex flex-row lg:flex-col gap-2 order-2 w-full mt-2 lg:mt-0">
                 {/* TEACHER PANEL */}
                 <button
                   onClick={() => {
@@ -2620,6 +2742,31 @@ export default function App() {
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white font-black py-2.5 rounded-full uppercase tracking-widest shadow-md text-[10px] transition-all hover:scale-105 active:scale-95"
                 >
                   End Game
+                </button>
+              </div>
+            )}
+
+            {!gameId && (
+              <div className="flex flex-row lg:flex-col gap-2 order-2 w-full mt-2 lg:mt-0">
+                <button
+                  onClick={() => {
+                    saveLocalGame();
+                    resetGame();
+                  }}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 rounded-full uppercase tracking-widest shadow-md flex items-center justify-center gap-1 text-[10px] transition-all hover:scale-105 active:scale-95"
+                >
+                  Save & Quit
+                </button>
+
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("savedLocalGame");
+                    setHasSavedGame(false);
+                    resetGame();
+                  }}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-black py-2.5 rounded-full uppercase tracking-widest shadow-md flex items-center justify-center gap-1 text-[10px] transition-all hover:scale-105 active:scale-95"
+                >
+                  Quit Game
                 </button>
               </div>
             )}
@@ -2662,8 +2809,13 @@ export default function App() {
               className="bg-white rounded-3xl max-w-lg w-full p-8 text-center border-b-8 border-green-500 shadow-2xl"
             >
               <div className="text-6xl mb-4">🌳</div>
-              <h2 className="text-2xl font-black text-green-700 mb-2 uppercase tracking-wide">
+              <h2 className="text-2xl font-black text-green-700 mb-2 uppercase tracking-wide flex flex-col items-center gap-1">
                 Tree of Knowledge
+                {questionTimeLeft !== null && (
+                  <span className={`text-3xl mt-2 p-2 rounded-xl transition-all font-mono ${questionTimeLeft <= 5 ? "text-red-600 bg-red-100 animate-pulse border-2 border-red-500 scale-110" : "text-slate-600 bg-slate-100"}`}>
+                    {questionTimeLeft}s
+                  </span>
+                )}
               </h2>
               {qModal.resolve === null && qModal.cpName && (
                  <p className="text-indigo-600 font-bold mb-4 animate-pulse uppercase tracking-wider bg-indigo-50 inline-block px-4 py-1 rounded-full text-xs">
