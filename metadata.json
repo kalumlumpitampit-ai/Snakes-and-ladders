@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Snakes & Ladders",
+  "description": "Multiplayer educational board game with a Teacher Dashboard.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

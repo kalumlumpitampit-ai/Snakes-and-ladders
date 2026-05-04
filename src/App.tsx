@@ -1764,11 +1764,16 @@ export default function App() {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-slate-700">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-                      Bulk Import
-                    </h4>
-                    <p className="text-[9px] text-slate-500 mb-2 font-semibold">
-                      Format: Question text | A | B | C | D | Answer: B 
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Bulk Import
+                      </h4>
+                      <a href="/100_questions.txt" download className="text-[9px] text-indigo-400 hover:text-indigo-300 font-bold underline">
+                        Download Sample (100 Qs)
+                      </a>
+                    </div>
+                    <p className="text-[9px] text-slate-500 mb-2 font-semibold leading-relaxed">
+                      Format: <br/>Question 1<br/>A. Option 1<br/>B. Option 2<br/>Answer: A
                     </p>
                     <textarea
                       value={bulkText}
