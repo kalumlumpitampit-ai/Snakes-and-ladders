@@ -2666,7 +2666,7 @@ export default function App() {
                       }}
                     >
                       {isCounting ? (
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-black font-black text-xl px-2 py-0.5 rounded-full shadow-xl border-2 border-black z-[100] animate-[bounce_0.5s_infinite]">
+                        <div className={`absolute ${p.pos > 90 ? "-bottom-10" : "-top-10"} left-1/2 -translate-x-1/2 bg-white text-black font-black text-xl px-2 py-0.5 rounded-full shadow-xl border-2 border-black z-[100] animate-[bounce_0.5s_infinite]`}>
                           {stepCount.count}
                         </div>
                       ) : null}
