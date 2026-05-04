@@ -16,6 +16,7 @@ import {
   Clock,
   BookOpen,
   HelpCircle,
+  User,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -829,7 +830,12 @@ export default function App() {
 
   const [questionBank, setQuestionBank] = useState<Question[]>(() => {
     const saved = localStorage.getItem("teacherQuestions");
-    return saved ? JSON.parse(saved) : [];
+    if (saved) return JSON.parse(saved);
+    return [
+      { q: "What is 2 + 2?", opts: ["3", "4", "5", "6"], ans: 1 },
+      { q: "Which planet is known as the Red Planet?", opts: ["Venus", "Mars", "Jupiter", "Saturn"], ans: 1 },
+      { q: "What is the capital of France?", opts: ["London", "Berlin", "Paris", "Rome"], ans: 2 }
+    ];
   });
   const questionBankRef = useRef<Question[]>(questionBank);
   const availableQRef = useRef<Question[]>([...questionBank]);
@@ -2220,6 +2226,16 @@ export default function App() {
                           )}
                         </div>
                       )}
+
+                      <div className="relative flex items-center py-5">
+                        <div className="flex-grow border-t border-indigo-200"></div>
+                        <span className="flex-shrink-0 mx-4 text-indigo-400 text-xs font-bold uppercase tracking-widest">Or</span>
+                        <div className="flex-grow border-t border-indigo-200"></div>
+                      </div>
+
+                      <button onClick={() => startGame(0, false)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-xl transition-all shadow-sm uppercase tracking-wider text-sm flex items-center justify-center gap-2">
+                        <User size={16} /> Play Local Mode (vs CPU)
+                      </button>
                     </>
                   )}
                 </div>
