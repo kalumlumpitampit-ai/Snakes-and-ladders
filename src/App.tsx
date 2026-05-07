@@ -17,6 +17,8 @@ import {
   BookOpen,
   HelpCircle,
   User,
+  LogIn,
+  Lock,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -310,6 +312,28 @@ export default function App() {
   // Multiplayer State
   const [user, setUser] = useState<User | null>(null);
   const [isAdminState, setIsAdminState] = useState<boolean>(false);
+  const [adminUsername, setAdminUsername] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminUsername === "admin" && adminPassword === "admin112119") {
+      setIsAdminState(true);
+      setLoginError("");
+      // Save session for the browser session
+      sessionStorage.setItem("isAdmin", "true");
+    } else {
+      setLoginError("Invalid credentials");
+      audio.play("wrong");
+    }
+  };
+
+  useEffect(() => {
+    if (sessionStorage.getItem("isAdmin") === "true") {
+      setIsAdminState(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (gameState === "playing" && players.length > 0) {
@@ -581,18 +605,15 @@ export default function App() {
     const unsub = onAuthStateChanged(auth, async (u) => {
        setUser(u);
        if (u) {
-          if (u.email === "teachertechsolution@gmail.com") {
-             setIsAdminState(true);
-          } else {
-             try {
-                const adminDoc = await getDoc(doc(db, "admins", u.uid));
-                setIsAdminState(adminDoc.exists());
-             } catch (e) {
-                setIsAdminState(false);
+          try {
+             const adminDoc = await getDoc(doc(db, "admins", u.uid));
+             if (adminDoc.exists()) {
+               setIsAdminState(true);
+               sessionStorage.setItem("isAdmin", "true");
              }
+          } catch (e) {
+             console.error("Admin check failed", e);
           }
-       } else {
-          setIsAdminState(false);
        }
     });
     return unsub;
@@ -636,7 +657,7 @@ export default function App() {
   const joinSession = async () => {
     if (!joinCode) return;
     
-    if (user?.email === "teachertechsolution@gmail.com") {
+    if (isAdminState) {
       showMessage("Admin Account", "You are the Game Master! You cannot join as a player. Use 'Admin Dashboard' to supervise the game.");
       return;
     }
@@ -1062,7 +1083,7 @@ export default function App() {
 
   const handleThemeChange = async (newThemeId: string) => {
     setBoardThemeId(newThemeId);
-    if (gameId && user?.email === "teachertechsolution@gmail.com") {
+    if (gameId && isAdminState) {
       try {
         await updateDoc(doc(db, "games", gameId), { boardThemeId: newThemeId });
       } catch (e) {
@@ -1080,7 +1101,7 @@ export default function App() {
     if (isNaN(count)) return;
     const validCount = Math.max(0, Math.min(30, count));
     setSnakeCount(validCount);
-    if (gameId && user?.email === "teachertechsolution@gmail.com") {
+    if (gameId && isAdminState) {
       try {
         await updateDoc(doc(db, "games", gameId), { snakeCount: validCount });
       } catch (e) {}
@@ -1096,7 +1117,7 @@ export default function App() {
     if (isNaN(count)) return;
     const validCount = Math.max(0, Math.min(30, count));
     setTreeCount(validCount);
-    if (gameId && user?.email === "teachertechsolution@gmail.com") {
+    if (gameId && isAdminState) {
       try {
         await updateDoc(doc(db, "games", gameId), { treeCount: validCount });
       } catch (e) {}
@@ -1650,74 +1671,65 @@ export default function App() {
             )}
           </div>
 
-          {(!user || !isAdminState) ? (
+          {!isAdminState ? (
             <div className="bg-slate-800 rounded-3xl p-6 sm:p-10 flex flex-col items-center justify-center border border-slate-700 shadow-2xl mt-10 max-w-md mx-auto w-full shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mb-6">
+                <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-500" />
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-white mb-3 text-center tracking-wide">
-                Admin Access Only
+                Admin Authentication
               </h3>
               <p className="text-slate-400 text-sm mb-6 text-center leading-relaxed">
-                You must be an approved admin to access the master controls.
+                Please enter your credentials to access the Game Control Center.
               </p>
               
-              {!user ? (
+              <form onSubmit={handleAdminLogin} className="w-full flex flex-col gap-4">
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    value={adminUsername}
+                    onChange={(e) => setAdminUsername(e.target.value)}
+                    className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
+                    required
+                  />
+                </div>
+
+                {loginError && (
+                  <p className="text-red-500 text-xs font-bold text-center animate-shake">{loginError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:-translate-y-1 active:translate-y-0 mt-2"
+                >
+                  <LogIn size={20} />
+                  Enter Dashboard
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-slate-700 w-full">
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold text-center mb-4">Or use Google Sign-in</p>
                 <button
                   onClick={login}
-                  className="w-full bg-white hover:bg-slate-200 text-slate-900 font-black py-4 rounded-xl shadow-lg transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:-translate-y-1 active:translate-y-0"
+                  className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-3"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
-                  Sign in with Google
+                  <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                  Google Admin Account
                 </button>
-              ) : (
-                <div className="w-full flex flex-col items-center">
-                  <div className="mb-6 bg-slate-900/50 border-l-4 border-slate-500 text-slate-300 px-4 py-3 rounded-r-lg text-xs font-medium w-full text-center">
-                    Logged in as <span className="font-bold text-white">{user.email}</span>
-                  </div>
-                  
-                  {myAdminRequestStatus?.status === "pending" ? (
-                    <div className="w-full bg-yellow-500/20 border-2 border-yellow-500/50 rounded-xl p-4 text-center">
-                      <Clock className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-                      <h4 className="text-yellow-400 font-bold mb-1">Request Pending</h4>
-                      <p className="text-xs text-yellow-200/70">The main admin is reviewing your request.</p>
-                    </div>
-                  ) : myAdminRequestStatus?.status === "rejected" ? (
-                    <div className="w-full bg-red-500/20 border-2 border-red-500/50 rounded-xl p-4 text-center">
-                      <XCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-                      <h4 className="text-red-400 font-bold mb-1">Request Rejected</h4>
-                      <p className="text-xs text-red-200/70 mb-2">Your request to become an admin was declined.</p>
-                      {myAdminRequestStatus.reason && (
-                         <div className="bg-red-900/50 p-2 rounded-lg text-red-200 text-xs italic mb-2">
-                           "{myAdminRequestStatus.reason}"
-                         </div>
-                      )}
-                       <button onClick={() => setMyAdminRequestStatus(null)} className="mt-3 text-xs bg-red-500/20 hover:bg-red-500/40 text-red-300 py-1 px-3 rounded-lg transition-colors">Apply Again</button>
-                    </div>
-                  ) : (
-                    <div className="w-full bg-slate-900 rounded-xl p-4 border border-slate-700">
-                      <h4 className="text-sm font-bold text-slate-300 mb-2">Request Admin Access</h4>
-                      <textarea 
-                        value={adminRequestReason}
-                        onChange={(e) => setAdminRequestReason(e.target.value)}
-                        placeholder="Why do you need admin access?" 
-                        className="w-full bg-slate-800 border border-slate-700 text-sm text-white px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-500 min-h-[80px] mb-3 resize-none"
-                      />
-                      <button 
-                        onClick={submitAdminRequest}
-                        disabled={!adminRequestReason.trim()}
-                        className={`w-full font-bold py-2 rounded-lg transition-colors text-sm ${adminRequestReason.trim() ? "bg-indigo-600 hover:bg-indigo-500 text-white" : "bg-slate-700 text-slate-500 cursor-not-allowed"}`}
-                      >
-                        Submit Request
-                      </button>
-                    </div>
-                  )}
-                  
-                  <button onClick={() => {auth.signOut(); setUser(null);}} className="text-xs text-slate-500 hover:text-slate-300 transition-colors mt-6 underline underline-offset-4">
-                     Sign out
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
           ) : showHistory ? (
             <div className="bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col">
@@ -1961,7 +1973,7 @@ export default function App() {
               <div className="lg:col-span-2 flex flex-col gap-6 lg:overflow-y-auto lg:pr-2 custom-scrollbar">
 
                 {/* ADMIN REQUESTS PANEL */}
-                {user?.email === "teachertechsolution@gmail.com" && pendingAdminRequests.length > 0 && (
+                {isAdminState && pendingAdminRequests.length > 0 && (
                   <div className="bg-slate-800 rounded-3xl p-5 sm:p-6 border border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
                     <h3 className="text-sm font-black text-amber-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -2323,7 +2335,7 @@ export default function App() {
                     </div>
                   ) : (
                     <>
-                      {user?.email === "teachertechsolution@gmail.com" && (
+                      {isAdminState && (
                         <button onClick={createGame} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black py-4 rounded-xl transition-all text-sm uppercase tracking-widest shadow-lg hover:shadow-xl hover:-translate-y-0.5">
                           Create Private Room
                         </button>
@@ -2333,7 +2345,7 @@ export default function App() {
                         <button id="join-btn" onClick={joinSession} className="bg-white hover:bg-indigo-50 border-2 border-indigo-200 text-indigo-800 font-black py-3 px-6 rounded-xl transition-all shadow-sm hover:shadow-md text-sm uppercase tracking-wider">Join</button>
                      </div>
                       
-                      {user?.email !== "teachertechsolution@gmail.com" && (
+                      {!isAdminState && (
                         <div className="mt-4 flex flex-col items-center">
                           {roomRequest?.status === "pending" ? (
                             <p className="text-xs font-bold text-indigo-500 animate-pulse bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100">
@@ -2723,7 +2735,7 @@ export default function App() {
               </button>
             </div>
 
-            {user?.email === "teachertechsolution@gmail.com" && gameId !== null && (
+            {isAdminState && gameId !== null && (
               <div className="flex flex-row lg:flex-col gap-2 order-2 w-full mt-2 lg:mt-0">
                 {/* TEACHER PANEL */}
                 <button

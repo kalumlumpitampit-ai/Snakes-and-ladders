@@ -10,7 +10,6 @@ service cloud.firestore {
     function existing() { return resource.data; }
     function isAdmin() { 
       return isSignedIn() && (
-        request.auth.token.email == 'teachertechsolution@gmail.com' ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
@@ -27,7 +26,7 @@ service cloud.firestore {
     match /admins/{uid} {
       allow get: if true;
       allow list: if isAdmin();
-      allow write: if isSignedIn() && request.auth.token.email == 'teachertechsolution@gmail.com';
+      allow write: if isAdmin(); // only current admins can add new admins
     }
 
     match /admin_requests/{requestId} {
