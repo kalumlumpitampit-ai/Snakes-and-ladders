@@ -19,6 +19,8 @@ import {
   User,
   LogIn,
   Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -314,18 +316,24 @@ export default function App() {
   const [isAdminState, setIsAdminState] = useState<boolean>(false);
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminUsername === "admin" && adminPassword === "admin112119") {
+    const cleanUser = adminUsername.trim().toLowerCase();
+    const cleanPass = adminPassword.trim();
+    
+    console.log("Admin login attempt with:", cleanUser);
+    
+    if (cleanUser === "admin" && cleanPass === "admin112119") {
       setIsAdminState(true);
       setLoginError("");
-      // Save session for the browser session
       sessionStorage.setItem("isAdmin", "true");
+      console.log("Admin login successful");
     } else {
-      setLoginError("Invalid credentials");
-      audio.play("wrong");
+      setLoginError("Invalid credentials. Please check your username and password.");
+      console.log("Admin login failed: Incorrect credentials");
     }
   };
 
@@ -383,7 +391,7 @@ export default function App() {
         } else {
            setRoomRequest(null);
         }
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, `room_requests/${localPlayerId}`));
     return () => unsub();
   }, [localPlayerId]);
 
@@ -446,7 +454,7 @@ export default function App() {
            } else {
               setMyAdminRequestStatus(null);
            }
-        });
+        }, (error) => handleFirestoreError(error, OperationType.GET, `admin_requests/${user.uid}`));
         return unsub;
     }
   }, [user, isAdminState]);
@@ -498,7 +506,7 @@ export default function App() {
       
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
-        if (data.hostId === user.uid) {
+        if (user && data.hostId === user.uid) {
            if (data.gameState === "playing") playingGameId = docSnap.id;
            if (data.gameState === "setup") activeGameId = docSnap.id;
         }
@@ -510,6 +518,13 @@ export default function App() {
          setGameId(recoveredId);
          setIsHost(true);
       }
+    }, (error) => {
+      // Quietly log permission errors for games collection as it might be a manual admin
+      if (error.code === 'permission-denied') {
+        console.warn("Games supervision disabled: Permission denied. (Normal if manual admin)");
+      } else {
+        handleFirestoreError(error, OperationType.LIST, "games");
+      }
     });
 
     const unsub = onSnapshot(collection(db, "room_requests"), (snapshot) => {
@@ -520,7 +535,7 @@ export default function App() {
             }
         });
         setPendingRequests(reqs.sort((a,b) => b.createdAt - a.createdAt));
-    });
+    }, (error) => handleFirestoreError(error, OperationType.LIST, "room_requests"));
     
     const unsubAdminReqs = onSnapshot(collection(db, "admin_requests"), (snapshot) => {
         const reqs: any[] = [];
@@ -530,6 +545,12 @@ export default function App() {
             }
         });
         setPendingAdminRequests(reqs.sort((a,b) => b.createdAt - a.createdAt));
+    }, (error) => {
+      if (error.code === 'permission-denied') {
+        console.warn("Admin requests supervision disabled: Permission denied.");
+      } else {
+        handleFirestoreError(error, OperationType.LIST, "admin_requests");
+      }
     });
     
     return () => {
@@ -1660,7 +1681,7 @@ export default function App() {
                 <p className="text-indigo-300 font-medium text-sm sm:text-base mt-1">Supervise the game remotely</p>
               </div>
             </div>
-            {user && isAdminState && (
+            {isAdminState && (
                <button
                  onClick={() => setShowHistory(!showHistory)}
                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl transition-colors font-bold text-sm"
@@ -1698,13 +1719,21 @@ export default function App() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Password"
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
-                    className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
+                    className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-12 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
                     required
+                    autoComplete="current-password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
 
                 {loginError && (
@@ -1718,6 +1747,11 @@ export default function App() {
                   <LogIn size={20} />
                   Enter Dashboard
                 </button>
+                <div className="mt-2 text-center">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                    Hint: admin / admin112119
+                  </p>
+                </div>
               </form>
 
               <div className="mt-8 pt-6 border-t border-slate-700 w-full">
