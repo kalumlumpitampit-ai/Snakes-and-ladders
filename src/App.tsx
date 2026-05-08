@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, FormEvent } from "react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc, getDocs, setDoc, onSnapshot, updateDoc, collection, deleteDoc } from "firebase/firestore";
@@ -16,11 +16,14 @@ import {
   Clock,
   BookOpen,
   HelpCircle,
-  User,
+  User as UserIcon,
   LogIn,
   Lock,
   Eye,
   EyeOff,
+  ShieldAlert,
+  Send,
+  UserCheck,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -319,7 +322,7 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = (e: FormEvent) => {
     e.preventDefault();
     const cleanUser = adminUsername.trim().toLowerCase();
     const cleanPass = adminPassword.trim();
@@ -628,7 +631,7 @@ export default function App() {
        if (u) {
           try {
              const adminDoc = await getDoc(doc(db, "admins", u.uid));
-             if (adminDoc.exists()) {
+             if (adminDoc.exists() || u.email === 'kalumlumpitampit@gmail.com') {
                setIsAdminState(true);
                sessionStorage.setItem("isAdmin", "true");
              }
@@ -1709,76 +1712,145 @@ export default function App() {
 
           {!isAdminState ? (
             <div className="bg-slate-800 rounded-3xl p-6 sm:p-10 flex flex-col items-center justify-center border border-slate-700 shadow-2xl mt-10 max-w-md mx-auto w-full shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mb-6">
-                <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-500" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black text-white mb-3 text-center tracking-wide">
-                Admin Authentication
-              </h3>
-              <p className="text-slate-400 text-sm mb-6 text-center leading-relaxed">
-                Please enter your credentials to access the Game Control Center.
-              </p>
-              
-              <form onSubmit={handleAdminLogin} className="w-full flex flex-col gap-4">
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Username"
-                    value={adminUsername}
-                    onChange={(e) => setAdminUsername(e.target.value)}
-                    className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
-                    required
-                  />
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-12 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
+              {user && myAdminRequestStatus ? (
+                <div className="w-full flex flex-col items-center text-center">
+                   <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mb-6">
+                      <ShieldAlert className={`w-10 h-10 ${myAdminRequestStatus.status === 'pending' ? 'text-amber-400' : 'text-red-400'}`} />
+                   </div>
+                   <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+                     {myAdminRequestStatus.status === 'pending' ? 'Request Pending' : 'Request Rejected'}
+                   </h3>
+                   <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                     {myAdminRequestStatus.status === 'pending' 
+                       ? "Your application for admin access has been received. Please wait for an existing admin to approve your account."
+                       : `Your request was rejected. Reason: ${myAdminRequestStatus.reason || 'No reason provided.'}`}
+                   </p>
+                   
+                   <div className="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-6 text-left">
+                      <div className="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-2">Account Details</div>
+                      <div className="text-xs text-white font-bold truncate">{user.email}</div>
+                      <div className="text-[10px] text-slate-400 mt-1 italic">UID: {user.uid}</div>
+                   </div>
 
-                {loginError && (
-                  <p className="text-red-500 text-xs font-bold text-center animate-shake">{loginError}</p>
-                )}
+                   <button 
+                     onClick={() => {
+                        setMyAdminRequestStatus(null);
+                        setAdminRequestReason("");
+                     }}
+                     className="text-indigo-400 hover:text-indigo-300 text-xs font-bold uppercase tracking-widest underline underline-offset-4"
+                   >
+                     Try Again or Use Different Account
+                   </button>
+                </div>
+              ) : user ? (
+                <div className="w-full flex flex-col items-center text-center">
+                   <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6">
+                      <UserCheck className="w-10 h-10 text-emerald-400" />
+                   </div>
+                   <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+                     Request Access
+                   </h3>
+                   <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                     You are signed in as <span className="text-white font-bold">{user.email}</span> but you don't have admin permissions yet.
+                   </p>
 
-                <button
-                  type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:-translate-y-1 active:translate-y-0 mt-2"
-                >
-                  <LogIn size={20} />
-                  Enter Dashboard
-                </button>
-                <div className="mt-2 text-center">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
-                    Hint: admin / admin112119
+                   <div className="w-full flex flex-col gap-3">
+                      <textarea
+                        value={adminRequestReason}
+                        onChange={(e) => setAdminRequestReason(e.target.value)}
+                        placeholder="Why do you need admin access? (e.g. I am a Teacher at...)"
+                        className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold text-sm min-h-[100px] resize-none"
+                      />
+                      <button
+                        onClick={submitAdminRequest}
+                        disabled={!adminRequestReason.trim()}
+                        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white font-black py-4 rounded-xl shadow-lg transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3"
+                      >
+                        <Send size={18} />
+                        Submit Request
+                      </button>
+                      <button 
+                        onClick={() => auth.signOut()}
+                        className="text-slate-500 hover:text-slate-400 text-xs font-bold uppercase tracking-widest mt-2"
+                      >
+                        Sign Out
+                      </button>
+                   </div>
+                </div>
+              ) : (
+                <>
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mb-6">
+                    <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-500" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white mb-3 text-center tracking-wide">
+                    Admin Authentication
+                  </h3>
+                  <p className="text-slate-400 text-sm mb-6 text-center leading-relaxed">
+                    Please enter your credentials to access the Game Control Center.
                   </p>
-                </div>
-              </form>
+                  
+                  <form onSubmit={handleAdminLogin} className="w-full flex flex-col gap-4">
+                    <div className="relative">
+                      <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Username"
+                        value={adminUsername}
+                        onChange={(e) => setAdminUsername(e.target.value)}
+                        className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                        className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 pl-12 pr-12 text-white focus:outline-none focus:border-indigo-500 transition-colors font-bold"
+                        required
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
 
-              <div className="mt-8 pt-6 border-t border-slate-700 w-full">
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold text-center mb-4">Or use Google Sign-in</p>
-                <button
-                  onClick={login}
-                  className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-3"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
-                  Google Admin Account
-                </button>
-              </div>
+                    {loginError && (
+                      <p className="text-red-500 text-xs font-bold text-center animate-shake">{loginError}</p>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:-translate-y-1 active:translate-y-0 mt-2"
+                    >
+                      <LogIn size={20} />
+                      Enter Dashboard
+                    </button>
+                    <div className="mt-2 text-center">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                        Hint: admin / admin112119
+                      </p>
+                    </div>
+                  </form>
+
+                  <div className="mt-8 pt-6 border-t border-slate-700 w-full">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold text-center mb-4">Or use Google Sign-in</p>
+                    <button
+                      onClick={login}
+                      className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-3"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                      Google Admin Account
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : showHistory ? (
             <div className="bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col">
@@ -2412,7 +2484,7 @@ export default function App() {
                       <div className="bg-slate-800/5 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
-                             <User size={14} className="text-indigo-500" />
+                             <UserIcon size={14} className="text-indigo-500" />
                              Play vs CPU
                           </span>
                           <select 
@@ -2428,7 +2500,7 @@ export default function App() {
                           </select>
                         </div>
                         <button onClick={() => startGame(0, false, localCpuCount)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs flex items-center justify-center gap-2">
-                          <User size={16} /> Start Local Game
+                          <UserIcon size={16} /> Start Local Game
                         </button>
                         {hasSavedGame && (
                           <button onClick={resumeLocalGame} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs flex items-center justify-center gap-2">
