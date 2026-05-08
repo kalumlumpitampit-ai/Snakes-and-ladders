@@ -337,6 +337,7 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
   const [showCopyTooltip, setShowCopyTooltip] = useState(false);
+  const [isAccessButtonExpanded, setIsAccessButtonExpanded] = useState(false);
 
   const copyEmail = () => {
     navigator.clipboard.writeText("teachertechsolution@gmail.com");
@@ -2699,14 +2700,36 @@ export default function App() {
             >
               {/* Request Admin Access Icon */}
               {!isAdminState && (
-                <button
-                  onClick={() => setShowRequestAccessModal(true)}
-                  className="fixed bottom-8 right-6 md:bottom-10 md:right-10 z-[60] p-4 rounded-full bg-slate-900 text-white shadow-2xl hover:bg-slate-800 transition-all hover:scale-110 active:scale-95 group flex items-center gap-2"
+                <motion.button
+                  layout
+                  onClick={() => {
+                    if (isAccessButtonExpanded) {
+                      setShowRequestAccessModal(true);
+                    } else {
+                      setIsAccessButtonExpanded(true);
+                    }
+                  }}
+                  onHoverStart={() => setIsAccessButtonExpanded(true)}
+                  onHoverEnd={() => setIsAccessButtonExpanded(false)}
+                  className="fixed bottom-8 right-6 md:bottom-10 md:right-10 z-[60] p-4 rounded-full bg-slate-900 text-white shadow-2xl hover:bg-slate-800 transition-all group flex items-center gap-0"
+                  animate={{ 
+                    width: isAccessButtonExpanded ? "auto" : 56,
+                    gap: isAccessButtonExpanded ? 12 : 0
+                  }}
                   title="Request Admin Access"
                 >
-                  <Settings size={22} className="group-hover:rotate-45 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Access</span>
-                </button>
+                  <Settings size={22} className={`${isAccessButtonExpanded ? 'rotate-45' : ''} transition-transform`} />
+                  <motion.span 
+                    initial={false}
+                    animate={{ 
+                      width: isAccessButtonExpanded ? "auto" : 0, 
+                      opacity: isAccessButtonExpanded ? 1 : 0 
+                    }}
+                    className="text-[10px] font-black uppercase tracking-widest overflow-hidden whitespace-nowrap"
+                  >
+                    Request Access
+                  </motion.span>
+                </motion.button>
               )}
 
               {/* Request Access Modal */}
