@@ -2170,18 +2170,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* GAME RULES CARD */}
-                <div className="bg-slate-800 rounded-3xl p-5 sm:p-6 border border-slate-700 shadow-xl flex flex-col shrink-0">
-                  <h3 className="text-sm font-black mb-4 text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-2 shrink-0">
-                    <BookOpen size={16} /> Game Rules
-                  </h3>
-                  <div className="text-[11px] text-slate-400 space-y-3 leading-relaxed">
-                    <p><strong className="text-slate-200">Objective:</strong> Race against others to be the first to reach the final tile (100).</p>
-                    <p><strong className="text-slate-200">Snakes:</strong> If you land on the head of a snake, you will slide down to its tail.</p>
-                    <p><strong className="text-slate-200">Ladders:</strong> If you land at the base of a ladder, you will climb up to its top.</p>
-                    <p><strong className="text-slate-200">Trees (Questions):</strong> Landing on a tree prompts a multiple-choice question from the Question Bank. You must answer it correctly to proceed safely!</p>
-                  </div>
-                </div>
 
               </div>
 
