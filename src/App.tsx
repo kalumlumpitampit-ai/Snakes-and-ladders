@@ -2546,14 +2546,6 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden bg-gradient-to-br from-green-200 to-blue-200 py-10"
           >
-            {/* Rules Button */}
-            <button
-              onClick={() => setShowInstructions(true)}
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-white/60 hover:bg-white text-green-700 p-3 rounded-full shadow-lg border-2 border-white/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center z-50 gap-2 font-black text-xs uppercase tracking-wider"
-            >
-              <HelpCircle size={20} className="drop-shadow-sm" />
-              <span className="hidden sm:inline">How to Play</span>
-            </button>
 
             <motion.div 
               initial={{ y: -30, opacity: 0 }}
