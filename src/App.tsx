@@ -25,6 +25,7 @@ import {
   Send,
   UserCheck,
   Share2,
+  Users,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -771,7 +772,7 @@ export default function App() {
           setShowBroadcastNotification(true);
         }
       }
-    }, (err) => console.error("Broadcast listener error:", err));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, "broadcasts"));
     return unsub;
   }, [isAdminState, isSuperAdmin, latestBroadcast?.id]);
 
@@ -2665,227 +2666,284 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden bg-gradient-to-br from-green-200 to-blue-200 py-10"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-start md:justify-center overflow-y-auto overflow-x-hidden bg-gradient-to-br from-green-200 to-blue-200 py-8 md:py-10"
           >
 
             <motion.div 
               initial={{ y: -30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 text-center mb-6 flex flex-col items-center w-full"
             >
-              {/* Floating Bubbles */}
-              <div className="absolute inset-0 -z-10 pointer-events-none">
-                {[...Array(6)].map((_, i) => (
+              {/* New Design Background Blobs */}
+              <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  rotate: [0, 90, 0],
+                  x: [0, 50, 0],
+                  y: [0, 30, 0],
+                }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-green-400/30 to-blue-500/30 blur-[120px]"
+              />
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.3, 1],
+                  rotate: [0, -120, 0],
+                  x: [0, -40, 0],
+                  y: [0, -60, 0],
+                }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-yellow-400/20 to-red-500/20 blur-[100px]"
+              />
+            </div>
+            
+            <div className="relative z-10 w-full max-w-5xl px-4 flex flex-col items-center">
+              <motion.div 
+                initial={{ y: -30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="text-center mb-4 md:mb-10 w-full"
+              >
+                <div className="flex flex-col items-center">
                   <motion.div
-                    key={i}
-                    animate={{
-                      y: [0, -100, 0],
-                      x: [0, Math.sin(i) * 30, 0],
-                      opacity: [0.2, 0.5, 0.2],
-                    }}
-                    transition={{
-                      duration: 5 + i,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    className="absolute w-16 h-16 rounded-full bg-white/20 blur-xl"
-                    style={{
-                      left: `${15 + i * 15}%`,
-                      top: `${20 + (i % 3) * 20}%`,
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Title Text */}
-              <div className="relative z-10 flex items-center justify-center text-4xl md:text-[8rem] font-black uppercase tracking-tighter text-green-800 drop-shadow-2xl pb-2 md:pb-4 px-4 leading-none">
-                <motion.span 
-                  className="text-4xl md:text-8xl mr-3 md:mr-6 inline-block drop-shadow-2xl origin-bottom"
-                  animate={{ 
-                    rotate: [-8, 8, -8],
-                    scale: [1, 1.1, 1] 
-                  }}
-                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                >🐍</motion.span>
-                <div className="relative">
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
+                    initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="bg-clip-text text-transparent bg-gradient-to-br from-green-600 via-green-800 to-emerald-900 tracking-tighter drop-shadow-xl pb-1 md:pb-2 relative z-10"
+                    transition={{ delay: 0.2, duration: 0.8 }}
+                    className="flex items-center justify-center gap-3 md:gap-8 mb-4 px-2"
                   >
-                    Snakes <br className="md:hidden" /> & Ladders
+                    <motion.span 
+                      animate={{ rotate: [-10, 10, -10], y: [0, -10, 0] }}
+                      transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                      className="text-4xl md:text-8xl drop-shadow-xl select-none"
+                    >🐍</motion.span>
+                    <h1 className="text-4xl md:text-9xl font-black uppercase tracking-tighter leading-tight md:leading-[0.85] flex flex-col items-center md:items-start">
+                      <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm">Snakes</span>
+                      <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4">& Ladders</span>
+                    </h1>
+                    <motion.span 
+                      animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+                      transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 0.5 }}
+                      className="text-4xl md:text-8xl drop-shadow-xl select-none"
+                    >🪜</motion.span>
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="inline-block bg-blue-600 text-white px-6 py-1.5 rounded-full font-black uppercase tracking-[0.3em] text-[10px] md:text-sm shadow-xl border-2 border-white/40 rotate-1 mb-4 md:mb-8"
+                  >
+                    Tree of Knowledge
                   </motion.div>
                 </div>
-                <motion.span 
-                  className="text-4xl md:text-8xl ml-3 md:ml-6 inline-block drop-shadow-2xl"
-                  animate={{ y: [0, -20, 0] }}
-                  transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                >🪜</motion.span>
-              </div>
-              <motion.div 
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.8, type: "spring" }}
-                className="bg-blue-600 text-white px-4 md:px-8 py-1.5 md:py-2.5 rounded-full font-black uppercase tracking-[0.4em] text-[10px] md:text-2xl shadow-2xl border-4 border-white/60 -mt-4 md:-mt-10 mb-2 md:mb-4 rotate-2 relative z-20"
-              >
-                Tree of Knowledge
               </motion.div>
-            </motion.div>
 
-            <div className="glass-panel p-6 md:p-12 rounded-[3rem] w-full max-w-md relative z-10 flex flex-col items-center bg-white/60 backdrop-blur-2xl border border-white/80 shadow-[0_30px_60px_rgba(0,0,0,0.12)] mt-2 md:mt-6 ring-1 ring-black/5">
-                <div className="w-full flex flex-col gap-4 md:gap-5 relative pt-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 underline underline-offset-8">Cloud Multiplayer Hub</p>
-                    <button 
-                      onClick={() => setShowInstructions(true)}
-                      className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-black uppercase bg-blue-50 text-blue-600 px-2 md:px-3 py-1.5 rounded-full hover:bg-blue-100 transition-all border border-blue-200/50 shadow-sm"
-                    >
-                      <HelpCircle size={10} /> How to play
-                    </button>
-                  </div>
-                  
-                  {gameId ? (
-                    <div className="text-center bg-indigo-50 p-4 rounded-2xl border border-indigo-200 shadow-inner relative">
-                      {gameId && (
-                        <button
-                          onClick={handleCopyCode}
-                          className="absolute top-3 right-3 text-indigo-400 hover:text-indigo-600 transition-colors"
-                          title="Copy Room Code"
-                        >
-                          {copiedCode ? <Check size={20} className="text-emerald-500" /> : <Copy size={20} />}
-                        </button>
-                      )}
-                      <div className="font-black text-indigo-900 text-xl mb-1 drop-shadow-sm tracking-widest leading-tight">{gameId}</div>
-                      <div className="text-[9px] text-indigo-400 font-bold uppercase tracking-widest mb-3">Room Code</div>
-                      
-                      <div className="mb-3">
-                        <input
-                          type="text"
-                          value={lobbyData[localPlayerId]?.name || ""}
-                          onChange={(e) => updateLobbyItem({ name: e.target.value })}
-                          placeholder="Team Name"
-                          className="w-full text-center text-sm font-bold px-3 py-1.5 border-2 border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-400"
-                        />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 w-full max-w-4xl">
+                {/* Main Action Card */}
+                <motion.div 
+                  initial={{ x: -30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="md:col-span-7"
+                >
+                  <div className="bg-white/70 backdrop-blur-3xl p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] h-full flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Active Room</span>
+                        <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Multiplayer</h2>
                       </div>
-                      
-                      <p className="text-[10px] sm:text-xs text-indigo-600 mb-2 font-bold uppercase shrink-0">Choose Team Color</p>
-                      <div className="flex justify-center gap-1.5 mb-3 overflow-hidden px-1 py-1">
-                        {colors.map((c, i) => {
-                          const isSelected = lobbyData[localPlayerId]?.colorIndex === i;
-                          const isTaken = Object.entries(lobbyData).some(([uid, data]: [string, any]) => uid !== localPlayerId && data.colorIndex === i);
-                          return (
-                          <button
-                            key={i}
-                            disabled={isTaken}
-                            onClick={() => updateLobbyItem({ colorIndex: i })}
-                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 border-[2px] transition-all ${isSelected ? "scale-110 shadow-md border-indigo-500" : "border-transparent"} ${isTaken ? "opacity-30 cursor-not-allowed" : "hover:scale-110"}`}
-                            style={{ backgroundColor: c.hex }}
-                          />
-                        )})}
-                      </div>
-
-                      <div className="text-[10px] sm:text-xs text-left mb-3 bg-white/60 p-2 sm:p-3 rounded-xl border border-indigo-100 max-h-24 overflow-y-auto">
-                         <div className="font-bold text-indigo-800 mb-1 border-b border-indigo-100 pb-1">Joined Teams:</div>
-                         {Object.values(lobbyData).map((p: any, idx) => (
-                           <div key={idx} className="flex items-center gap-2 mb-1">
-                             <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: p.colorIndex !== null ? colors[p.colorIndex].hex : '#cbd5e1'}}></div>
-                             <span className="font-bold text-gray-700">{p.name || `Player ${idx + 1}`}</span>
-                           </div>
-                         ))}
-                      </div>
-
-                      {isHost ? (
-                        <button
-                          onClick={startMultiplayerGame}
-                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs sm:text-sm"
-                        >
-                          Start Game
-                        </button>
-                      ) : (
-                        <p className="text-xs font-bold text-indigo-600 animate-pulse">Waiting for host...</p>
-                      )}
+                      <button 
+                        onClick={() => setShowInstructions(true)}
+                        className="p-3 bg-white/80 hover:bg-white text-slate-600 rounded-2xl transition-all shadow-sm border border-slate-100 hover:scale-105 active:scale-95"
+                      >
+                        <HelpCircle size={20} />
+                      </button>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex gap-2 md:gap-3 mt-1 md:mt-2">
-                        <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="ENTER CODE" className="flex-1 w-full border-2 border-indigo-100 rounded-xl px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 uppercase font-black text-indigo-900 text-center tracking-widest" />
-                        <button id="join-btn" onClick={joinSession} className="bg-white hover:bg-indigo-50 border-2 border-indigo-200 text-indigo-800 font-black py-2 md:py-3 px-4 md:px-6 rounded-xl transition-all shadow-sm hover:shadow-md text-xs md:text-sm uppercase tracking-wider">Join</button>
-                      </div>
-                      
-                      {!isAdminState && (
-                        <div className="mt-2 md:mt-4 flex flex-col items-center text-center">
-                          {roomRequest?.status === "pending" ? (
-                            <p className="text-[9px] md:text-xs font-bold text-indigo-500 animate-pulse bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100">
-                              Waiting for admin to approve...
-                            </p>
-                          ) : (
-                            <button onClick={requestRoomCode} className="text-[9px] md:text-xs text-indigo-500 hover:text-indigo-700 font-bold underline underline-offset-2 transition-colors">
-                              Need a room code? Request from admin
+
+                    <div className="flex-1 flex flex-col justify-center">
+                      {gameId ? (
+                        <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 shadow-inner relative text-indigo-900">
+                          <button
+                            onClick={handleCopyCode}
+                            className="absolute top-4 right-4 p-2 bg-white rounded-xl text-indigo-400 hover:text-indigo-600 shadow-sm border border-indigo-50 transition-all hover:scale-110"
+                          >
+                            {copiedCode ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
+                          </button>
+                          
+                          <div className="text-center">
+                            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.3em] mb-1 block">Room Code</span>
+                            <div className="font-black text-indigo-900 text-3xl mb-4 tracking-widest tabular-nums">{gameId}</div>
+                            
+                            <div className="flex flex-col gap-4 max-w-xs mx-auto">
+                              <input
+                                type="text"
+                                value={lobbyData[localPlayerId]?.name || ""}
+                                onChange={(e) => updateLobbyItem({ name: e.target.value })}
+                                placeholder="Enter Team Name..."
+                                className="w-full text-center text-sm font-bold px-4 py-3 bg-white border-2 border-indigo-100 rounded-2xl focus:outline-none focus:border-indigo-400 shadow-sm transition-all"
+                              />
+                              
+                              <div className="bg-white/80 p-4 rounded-2xl border border-indigo-50">
+                                <p className="text-[10px] text-indigo-500 mb-3 font-black uppercase tracking-widest">Choose Your Color</p>
+                                <div className="flex justify-center flex-wrap gap-2">
+                                  {colors.map((c, i) => {
+                                    const isSelected = lobbyData[localPlayerId]?.colorIndex === i;
+                                    const isTaken = Object.entries(lobbyData).some(([uid, data]: [string, any]) => uid !== localPlayerId && data.colorIndex === i);
+                                    return (
+                                      <button
+                                        key={i}
+                                        disabled={isTaken}
+                                        onClick={() => updateLobbyItem({ colorIndex: i })}
+                                        className={`w-9 h-9 rounded-full border-4 transition-all ${isSelected ? "scale-110 shadow-lg border-white ring-4 ring-indigo-200" : "border-white/50"} ${isTaken ? "opacity-20 cursor-not-allowed scale-90" : "hover:scale-110 shadow-sm"}`}
+                                        style={{ backgroundColor: c.hex }}
+                                      />
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-col gap-2 mt-2">
+                                {isHost ? (
+                                  <button
+                                    onClick={startMultiplayerGame}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:shadow-indigo-200 uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                                  >
+                                    Launch Game <Send size={16} />
+                                  </button>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold py-4">
+                                    <div className="flex gap-1">
+                                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
+                                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                      <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                    </div>
+                                    <span className="text-xs uppercase tracking-widest">Waiting for host</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-6">
+                          <div className="flex flex-col gap-3">
+                            <input 
+                              value={joinCode} 
+                              onChange={(e) => setJoinCode(e.target.value)} 
+                              placeholder="ENTER ROOM CODE" 
+                              className="w-full bg-indigo-50/50 border-2 border-indigo-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-indigo-400 transition-all uppercase font-black text-indigo-900 text-center tracking-[0.3em] placeholder:text-indigo-200" 
+                            />
+                            <button 
+                              onClick={joinSession} 
+                              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-2xl transition-all shadow-lg uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                            >
+                              Join Match <Users size={18} />
                             </button>
+                          </div>
+
+                          {!isAdminState && (
+                            <div className="text-center">
+                              {roomRequest?.status === "pending" ? (
+                                <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full border border-amber-100 animate-pulse">
+                                  <Clock size={14} />
+                                  <span className="text-[10px] font-black uppercase tracking-widest">Pending Approval</span>
+                                </div>
+                              ) : (
+                                <button 
+                                  onClick={requestRoomCode} 
+                                  className="text-[10px] text-slate-400 hover:text-blue-600 font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mx-auto group"
+                                >
+                                  Need a code? <span className="underline underline-offset-4 group-hover:no-underline text-blue-600">Ask Admin</span>
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
+                    </div>
+                  </div>
+                </motion.div>
 
-                      <div className="relative flex items-center py-5">
-                        <div className="flex-grow border-t border-indigo-200"></div>
-                        <span className="flex-shrink-0 mx-4 text-indigo-400 text-xs font-bold uppercase tracking-widest">Or</span>
-                        <div className="flex-grow border-t border-indigo-200"></div>
-                      </div>
-
-                      <div className="bg-slate-800/5 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
-                             <UserIcon size={14} className="text-indigo-500" />
-                             Play vs CPU
-                          </span>
-                          <select 
-                            value={localCpuCount}
-                            onChange={(e) => setLocalCpuCount(Number(e.target.value))}
-                            className="bg-white border border-indigo-200 text-indigo-800 text-xs font-black rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-400 shadow-sm"
-                          >
-                            <option value={1}>1 CPU</option>
-                            <option value={2}>2 CPUs</option>
-                            <option value={3}>3 CPUs</option>
-                            <option value={4}>4 CPUs</option>
-                            <option value={5}>5 CPUs</option>
-                          </select>
+                {/* Secondary Action Column */}
+                <motion.div 
+                  initial={{ x: 30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="md:col-span-5 flex flex-col gap-6"
+                >
+                  {/* Practice Card */}
+                  <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/50 shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex-1 flex flex-col">
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Local Play</span>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-6">Solo Mode</h2>
+                    
+                    <div className="flex-1 flex flex-col gap-4">
+                      <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 mb-2">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">CPU Difficulty</span>
+                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[9px] font-black">{localCpuCount} Challengers</span>
                         </div>
-                        <button onClick={() => startGame(0, false, localCpuCount)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-2.5 md:py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-[10px] md:text-xs flex items-center justify-center gap-2">
-                          <UserIcon size={14} /> Start Local Game
-                        </button>
-                        {hasSavedGame && (
-                          <button onClick={resumeLocalGame} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2.5 md:py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-[10px] md:text-xs flex items-center justify-center gap-2">
-                            <Clock size={14} /> Resume Saved Game
-                          </button>
-                        )}
-                        <a
-                          href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access&body=I would like to request admin access for the Teacher Tech Solution Game app."
-                          className="w-full mt-2 md:mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 md:py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest border border-slate-200"
-                        >
-                          <Settings size={10} /> Request Admin Access
-                        </a>
+                        <input 
+                          type="range" 
+                          min="1" 
+                          max="5" 
+                          value={localCpuCount}
+                          onChange={(e) => setLocalCpuCount(Number(e.target.value))}
+                          className="w-full accent-emerald-600"
+                        />
                       </div>
-                    </>
-                  )}
-                </div>
 
-                {isAdminState && (
-                  <button
-                    onClick={() => {
-                      audio.init();
-                      setLocation("/admin");
-                    }}
-                    className="w-full mt-4 md:mt-8 bg-black/5 hover:bg-black/10 text-indigo-900/60 hover:text-indigo-900 font-bold py-2 md:py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-[10px] md:text-xs uppercase tracking-widest"
-                  >
-                    <Settings size={12} /> Admin Dashboard
-                  </button>
-                )}
+                      <button 
+                        onClick={() => startGame(0, false, localCpuCount)} 
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:shadow-emerald-100 uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                      >
+                        <UserIcon size={16} /> Start Local
+                      </button>
+
+                      {hasSavedGame && (
+                        <button 
+                          onClick={resumeLocalGame} 
+                          className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-2xl transition-all shadow-lg uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                        >
+                          <Clock size={16} /> Resume Game
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Admin Quick Entry */}
+                  {isAdminState ? (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        audio.init();
+                        setLocation("/admin");
+                      }}
+                      className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-xl flex items-center justify-between group overflow-hidden relative"
+                    >
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+                      <div className="flex flex-col items-start z-10">
+                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Game Master</span>
+                        <span className="text-lg font-black tracking-tight">Admin Dashboard</span>
+                      </div>
+                      <ChevronRight className="transition-transform group-hover:translate-x-1 z-10" />
+                    </motion.button>
+                  ) : (
+                    <a
+                      href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access"
+                      className="bg-white/40 hover:bg-white/60 p-5 rounded-[2rem] border border-white/20 shadow-sm flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all"
+                    >
+                      <Settings size={14} /> Request Access
+                    </a>
+                  )}
+                </motion.div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </motion.div>
+        </motion.div>
+        )}
+      </AnimatePresence>
 
       {gameState === "playing" && (
         <motion.div

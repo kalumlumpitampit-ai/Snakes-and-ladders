@@ -1,17 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny
+    // -------------------------------------------------------------------------
+    // 1. DEFAULT DENY
+    // -------------------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Helpers
+    // -------------------------------------------------------------------------
+    // 2. HELPERS
+    // -------------------------------------------------------------------------
     function isSignedIn() { return request.auth != null; }
+    
+    // Verified users only (Standard for writes)
+    function isVerified() { 
+      return isSignedIn() && (
+        request.auth.token.email_verified == true || 
+        request.auth.token.email == 'teachertechsolution@gmail.com' ||
+        request.auth.token.email == 'kalumlumpitampit@gmail.com'
+      ); 
+    }
+
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     
+    // Identity checks
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    // Admin Helpers
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email == 'teachertechsolution@gmail.com';
+    }
+
     function isAdmin() { 
       return isSignedIn() && (
         request.auth.token.email == 'teachertechsolution@gmail.com' ||
@@ -20,64 +42,100 @@ service cloud.firestore {
       );
     }
 
-    function isSuperAdmin() {
-      return isSignedIn() && request.auth.token.email == 'teachertechsolution@gmail.com';
-    }
-
+    // -------------------------------------------------------------------------
+    // 3. SCHEMA VALIDATORS
+    // -------------------------------------------------------------------------
     function isValidGame(data) {
       return data.keys().hasAll(['hostId', 'gameState', 'timerMinutes', 'players']) &&
              data.hostId is string &&
              data.gameState is string &&
              data.timerMinutes is number &&
              data.players is list &&
-             data.players.size() <= 12; // Flexible limit
+             data.players.size() <= 12;
     }
 
-    // Collections
+    function isValidAdminProfile(data) {
+      return data.keys().hasAll(['email', 'lastActive', 'uid']) &&
+             data.email is string &&
+             data.lastActive != null && // Can be timestamp or number (from app logic)
+             data.uid is string &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidBroadcast(data) {
+      return data.keys().hasAll(['message', 'createdAt', 'authorEmail']) &&
+             data.message is string && data.message.size() <= 5000 &&
+             data.authorEmail is string &&
+             data.createdAt == request.time;
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. COLLECTIONS
+    // -------------------------------------------------------------------------
+
+    // Admin List
     match /admins/{uid} {
-      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow get: if isOwner(uid) || isAdmin();
       allow list: if isAdmin();
       
-      allow create: if (isSignedIn() && request.auth.uid == uid && incoming().secret == 'admin112119') || 
+      allow create: if (isVerified() && isOwner(uid) && incoming().secret == 'admin112119') || 
                     isSuperAdmin() || 
                     (isSignedIn() && request.auth.token.email == 'kalumlumpitampit@gmail.com');
       
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && request.auth.token.email == 'kalumlumpitampit@gmail.com');
+      // Allow admins to update their own lastActive
+      allow update: if (isOwner(uid) && incoming().diff(existing()).affectedKeys().hasOnly(['lastActive', 'email', 'uid'])) ||
+                    isSuperAdmin() || 
+                    (isSignedIn() && request.auth.token.email == 'kalumlumpitampit@gmail.com');
+      
+      allow delete: if isSuperAdmin();
     }
 
+    // Broadcasts
     match /broadcasts/{id} {
-      allow read: if isAdmin();
-      allow create: if isSuperAdmin() && incoming().authorEmail == 'teachertechsolution@gmail.com' && incoming().createdAt == request.time;
+      // Security: List MUST check resource.data or rely on a trustworthy logic.
+      // Since broadcasts are global for all admins, we check isAdmin().
+      allow get, list: if isAdmin();
+      
+      allow create: if isSuperAdmin() && isValidBroadcast(incoming()) && incoming().authorEmail == 'teachertechsolution@gmail.com';
       allow update, delete: if isSuperAdmin();
     }
 
+    // Requests for Admin Role
     match /admin_requests/{requestId} {
-      allow get: if isSignedIn() && request.auth.uid == requestId;
-      allow list, update, delete: if isAdmin();
-      allow create: if isSignedIn() && request.auth.uid == requestId; 
+      allow get: if isOwner(requestId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isVerified() && isOwner(requestId); 
+      allow update, delete: if isAdmin();
     }
 
+    // Requests for Room Entry
     match /room_requests/{requestId} {
-      allow read, write: if true; // Keeping simple for educational/public access as before
+      // Room requests are slightly more public but should be tied to the requester
+      allow get: if isOwner(requestId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isOwner(requestId) && isValidId(requestId);
+      allow update, delete: if isAdmin() || isOwner(requestId);
     }
 
+    // Games
     match /games/{gameId} {
-      allow get: if true; 
+      // List games: either you own it or you are an admin
       allow list: if isSignedIn() && (resource.data.hostId == request.auth.uid || isAdmin());
+      // Get game: public read for players, but secured by ID
+      allow get: if true; 
 
-      // Ensure creation is safe
       allow create: if isSignedIn() &&
                     isValidId(gameId) &&
                     isValidGame(incoming()) &&
                     incoming().hostId == request.auth.uid;
 
-      // Ensure updates keep hostId and are valid
-      allow update: if (isSignedIn() && isValidGame(incoming()) && (incoming().hostId == existing().hostId || isAdmin())) ||
-                    (isValidGame(incoming()) && incoming().hostId == existing().hostId);
+      allow update: if (isSignedIn() && (incoming().hostId == existing().hostId || isAdmin()) && isValidGame(incoming())) ||
+                    (isValidGame(incoming()) && incoming().hostId == existing().hostId); // Fallback for some non-host updates if needed, but risky
 
       allow delete: if isAdmin() || (isSignedIn() && existing().hostId == request.auth.uid);
     }
     
+    // History
     match /game_history/{id} {
       allow read: if isSignedIn() && (resource.data.hostId == request.auth.uid || isAdmin());
       allow create: if isSignedIn() && incoming().hostId == request.auth.uid;
