@@ -400,6 +400,7 @@ export default function App() {
 
   const [gameId, setGameId] = useState<string | null>(null);
   const [adminEnded, setAdminEnded] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [lobbyData, setLobbyData] = useState<Record<string, {name: string, colorIndex: number | null}>>({});
   const [joinCode, setJoinCode] = useState<string>("");
   const [isHost, setIsHost] = useState(false);
@@ -2623,7 +2624,15 @@ export default function App() {
 
             <div className="glass-panel p-8 md:p-12 rounded-[3rem] w-full max-w-md relative z-10 flex flex-col items-center bg-white/60 backdrop-blur-2xl border border-white/80 shadow-[0_30px_60px_rgba(0,0,0,0.12)] mt-6 ring-1 ring-black/5">
                 <div className="w-full flex flex-col gap-5 relative pt-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 text-center mb-1 drop-shadow-sm opacity-80 underline underline-offset-8">Cloud Multiplayer Hub</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 underline underline-offset-8">Cloud Multiplayer Hub</p>
+                    <button 
+                      onClick={() => setShowInstructions(true)}
+                      className="flex items-center gap-1.5 text-[10px] font-black uppercase bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-all border border-blue-200/50 shadow-sm"
+                    >
+                      <HelpCircle size={12} /> How to play
+                    </button>
+                  </div>
                   
                   {gameId ? (
                     <div className="text-center bg-indigo-50 p-4 rounded-2xl border border-indigo-200 shadow-inner relative">
@@ -3462,6 +3471,116 @@ export default function App() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Multiplayer Instructions Modal */}
+      <AnimatePresence>
+        {showInstructions && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col border border-white/20"
+            >
+              {/* Modal Header */}
+              <div className="p-6 sm:p-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/10">
+                    <BookOpen size={24} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight">Multiplayer Guide</h2>
+                    <p className="text-white/70 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Master the Digital Board</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowInstructions(false)}
+                  className="w-10 h-10 bg-black/20 hover:bg-black/30 rounded-full flex items-center justify-center transition-colors relative z-10"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 sm:p-10 overflow-y-auto flex-grow custom-scrollbar">
+                <div className="space-y-10">
+                  
+                  {/* For Host Section */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-black">1</div>
+                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">For the Host (Admin)</h3>
+                    </div>
+                    <ul className="space-y-3 ml-11 text-slate-600 font-medium text-sm list-disc">
+                      <li>Log in via the <span className="text-indigo-600 font-bold">Admin Dashboard</span> (found at the bottom of the home screen).</li>
+                      <li>Generate a <span className="text-indigo-600 font-bold">Room Code</span> or copy the <span className="text-emerald-600 font-bold">Shareable Link</span>.</li>
+                      <li>Send the room code/link to your players via your preferred platform.</li>
+                      <li>Wait for your students or players to join the lobby and pick their teams.</li>
+                      <li>Once everyone is connected, click <span className="bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">START GAME</span> to begin the session.</li>
+                    </ul>
+                  </section>
+
+                  {/* For Players Section */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-black">2</div>
+                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">For the Players</h3>
+                    </div>
+                    <ul className="space-y-3 ml-11 text-slate-600 font-medium text-sm list-disc">
+                      <li>If using a link, you'll be automatically directed to the lobby.</li>
+                      <li>If using a code, type it into the <span className="text-indigo-600 font-bold">"ENTER CODE"</span> input box on the home screen.</li>
+                      <li>Enter your group/team name and <span className="text-amber-500 font-bold">select a color</span> from the available ones.</li>
+                      <li>Get comfortable and wait for the Host to launch the game board!</li>
+                    </ul>
+                  </section>
+
+                  {/* Gameplay Section */}
+                  <section className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-black">3</div>
+                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">How to Play</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 ml-11">
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-blue-50 flex items-start gap-3">
+                        <div className="text-2xl mt-0.5">🐍</div>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm mb-1">Watch for Snakes!</p>
+                          <p className="text-slate-500 text-xs">Landing on a snake's head will slide your team down to its tail. Stay alert!</p>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-blue-50 flex items-start gap-3">
+                        <div className="text-2xl mt-0.5">🪜</div>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm mb-1">Climb the Ladders!</p>
+                          <p className="text-slate-500 text-xs">Landing at the base of a ladder gives you a massive boost forward.</p>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-blue-50 flex items-start gap-3 col-span-full">
+                        <div className="text-2xl mt-0.5">🏆</div>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm mb-1">The Goal</p>
+                          <p className="text-slate-500 text-xs">The first team to navigate the entire board and land exactly on <span className="font-black text-blue-600">Tile 100</span> wins the game!</p>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+                <button 
+                  onClick={() => setShowInstructions(false)}
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg hover:shadow-xl active:scale-95"
+                >
+                  Got it, let's play!
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
