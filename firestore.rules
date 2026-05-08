@@ -14,9 +14,14 @@ service cloud.firestore {
     
     function isAdmin() { 
       return isSignedIn() && (
+        request.auth.token.email == 'teachertechsolution@gmail.com' ||
         request.auth.token.email == 'kalumlumpitampit@gmail.com' ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email == 'teachertechsolution@gmail.com';
     }
 
     function isValidGame(data) {
@@ -30,16 +35,20 @@ service cloud.firestore {
 
     // Collections
     match /admins/{uid} {
-      allow get: if true;
+      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
       allow list: if isAdmin();
       
-      // Allow self-registration if they provide the secret key (given by main admin)
-      // or if they are already an admin (promotion)
       allow create: if (isSignedIn() && request.auth.uid == uid && incoming().secret == 'admin112119') || 
-                    isAdmin() || 
+                    isSuperAdmin() || 
                     (isSignedIn() && request.auth.token.email == 'kalumlumpitampit@gmail.com');
       
-      allow update, delete: if isAdmin() || (isSignedIn() && request.auth.token.email == 'kalumlumpitampit@gmail.com');
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && request.auth.token.email == 'kalumlumpitampit@gmail.com');
+    }
+
+    match /broadcasts/{id} {
+      allow read: if isAdmin();
+      allow create: if isSuperAdmin() && incoming().authorEmail == 'teachertechsolution@gmail.com' && incoming().createdAt == request.time;
+      allow update, delete: if isSuperAdmin();
     }
 
     match /admin_requests/{requestId} {

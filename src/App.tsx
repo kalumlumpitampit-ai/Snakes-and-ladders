@@ -318,6 +318,12 @@ export default function App() {
   // Multiplayer State
   const [user, setUser] = useState<User | null>(null);
   const [isAdminState, setIsAdminState] = useState<boolean>(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
+  const [adminList, setAdminList] = useState<{email: string, lastActive: any, uid: string}[]>([]);
+  const [broadcastInput, setBroadcastInput] = useState("");
+  const [activeBroadcasts, setActiveBroadcasts] = useState<any[]>([]);
+  const [showBroadcastNotification, setShowBroadcastNotification] = useState(false);
+  const [latestBroadcast, setLatestBroadcast] = useState<any>(null);
   const adminLogout = () => {
     setIsAdminState(false);
     sessionStorage.removeItem("isAdmin");
@@ -717,19 +723,67 @@ export default function App() {
     const unsub = onAuthStateChanged(auth, async (u) => {
        setUser(u);
        if (u) {
+          const email = u.email?.toLowerCase();
+          const isSA = email === 'teachertechsolution@gmail.com';
+          setIsSuperAdmin(isSA);
+          
           try {
              const adminDoc = await getDoc(doc(db, "admins", u.uid));
-             if (adminDoc.exists() || u.email === 'kalumlumpitampit@gmail.com') {
+             const isKnownAdmin = adminDoc.exists() || email === 'kalumlumpitampit@gmail.com' || isSA;
+             
+             if (isKnownAdmin) {
                setIsAdminState(true);
                sessionStorage.setItem("isAdmin", "true");
+               
+               // Register activity for the admin list feature
+               await setDoc(doc(db, "admins", u.uid), {
+                 email: u.email,
+                 lastActive: serverTimestamp(),
+                 uid: u.uid
+               }, { merge: true });
              }
           } catch (e) {
              console.error("Admin check failed", e);
           }
+       } else {
+         setIsSuperAdmin(false);
        }
     });
     return unsub;
   }, []);
+
+  // Listen for broadcasts (all admins see this)
+  useEffect(() => {
+    if (!isAdminState && !isSuperAdmin) return;
+    
+    // Sort by createdAt desc, limit to last 5
+    const q = query(collection(db, "broadcasts"), where("createdAt", ">", new Date(Date.now() - 24 * 3600000))); // Last 24 hours
+    const unsub = onSnapshot(q, (snap) => {
+      const msgs = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a: any, b: any) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+      setActiveBroadcasts(msgs);
+      
+      if (msgs.length > 0) {
+        const newest: any = msgs[0];
+        // Only notify if it's really new (within last minute) and we haven't seen it
+        const isVeryRecent = newest.createdAt && (Date.now() - newest.createdAt.toMillis() < 60000);
+        if (isVeryRecent && latestBroadcast?.id !== newest.id) {
+          setLatestBroadcast(newest);
+          setShowBroadcastNotification(true);
+        }
+      }
+    }, (err) => console.error("Broadcast listener error:", err));
+    return unsub;
+  }, [isAdminState, isSuperAdmin, latestBroadcast?.id]);
+
+  // Fetch admin list for Super Admin
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    const unsub = onSnapshot(collection(db, "admins"), (snap) => {
+      const list = snap.docs.map(d => d.data() as any);
+      setAdminList(list.sort((a, b) => b.lastActive?.toMillis() - a.lastActive?.toMillis()));
+    });
+    return unsub;
+  }, [isSuperAdmin]);
 
   const login = async () => {
     try {
@@ -1395,6 +1449,20 @@ export default function App() {
     }
   };
 
+  const sendBroadcast = async () => {
+    if (!broadcastInput.trim() || !isSuperAdmin || !user) return;
+    try {
+      await setDoc(doc(collection(db, "broadcasts")), {
+        message: broadcastInput.trim(),
+        authorEmail: user.email,
+        createdAt: serverTimestamp()
+      });
+      setBroadcastInput("");
+      showMessage("Broadcast Sent", "Your message has been sent to all active admins.");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, "broadcasts");
+    }
+  };
   const endAllGames = async () => {
     if (!isAdminState) {
       alert("Elevation required to perform this action.");
@@ -2232,6 +2300,59 @@ export default function App() {
               {/* RIGHT COLUMN: Live Dashboard & Ranking & Requests */}
               <div className="lg:col-span-2 flex flex-col gap-6 lg:overflow-y-auto lg:pr-2 custom-scrollbar">
 
+                {/* SUPER ADMIN PANEL */}
+                {isSuperAdmin && (
+                  <div className="bg-indigo-900 rounded-3xl p-5 sm:p-6 border-4 border-indigo-400/50 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
+                    <h3 className="text-sm font-black text-white uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
+                       <ShieldAlert className="text-indigo-300 animate-pulse" />
+                       Super Admin Command Center
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Broadcast Input */}
+                      <div className="bg-white/10 rounded-2xl p-4 border border-white/10">
+                        <h4 className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-3">Broadcast to Admins</h4>
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            value={broadcastInput}
+                            onChange={(e) => setBroadcastInput(e.target.value)}
+                            placeholder="Type a message to all admins..."
+                            className="w-full bg-white/5 border border-white/20 rounded-xl p-3 text-white text-sm font-bold focus:outline-none focus:border-indigo-400 min-h-[80px] resize-none placeholder:text-white/30"
+                          />
+                          <button
+                            onClick={sendBroadcast}
+                            disabled={!broadcastInput.trim()}
+                            className="w-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white font-black py-2.5 rounded-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                          >
+                            <Send size={14} /> Send Broadcast
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Admin Activity Monitor */}
+                      <div className="bg-black/20 rounded-2xl p-4 border border-white/5 max-h-[220px] flex flex-col">
+                        <h4 className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-3 flex items-center justify-between">
+                          <span>Active Admin Accounts</span>
+                          <span className="bg-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded-full text-[8px]">{adminList.length} Accounts</span>
+                        </h4>
+                        <div className="overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-1">
+                          {adminList.map((adm, idx) => (
+                            <div key={adm.uid || idx} className="bg-white/5 rounded-lg p-2.5 border border-white/5 flex items-center justify-between hover:bg-white/10 transition-colors">
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-bold text-white truncate">{adm.email}</p>
+                                <p className="text-[9px] text-white/40 uppercase tracking-tighter">
+                                  Last seen: {adm.lastActive ? new Date(adm.lastActive.toMillis()).toLocaleString() : 'Never'}
+                                </p>
+                              </div>
+                              <div className="shrink-0 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* ADMIN REQUESTS PANEL */}
                 {isAdminState && pendingAdminRequests.length > 0 && (
                   <div className="bg-slate-800 rounded-3xl p-5 sm:p-6 border border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
@@ -2578,9 +2699,9 @@ export default function App() {
               </div>
 
               {/* Title Text */}
-              <div className="relative z-10 flex items-center justify-center text-6xl md:text-[8rem] font-black uppercase tracking-tighter text-green-800 drop-shadow-2xl pb-4 px-4 leading-none">
+              <div className="relative z-10 flex items-center justify-center text-4xl md:text-[8rem] font-black uppercase tracking-tighter text-green-800 drop-shadow-2xl pb-2 md:pb-4 px-4 leading-none">
                 <motion.span 
-                  className="text-5xl md:text-8xl mr-6 inline-block drop-shadow-2xl origin-bottom"
+                  className="text-4xl md:text-8xl mr-3 md:mr-6 inline-block drop-shadow-2xl origin-bottom"
                   animate={{ 
                     rotate: [-8, 8, -8],
                     scale: [1, 1.1, 1] 
@@ -2592,13 +2713,13 @@ export default function App() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 1, ease: "easeOut" }}
-                    className="bg-clip-text text-transparent bg-gradient-to-br from-green-600 via-green-800 to-emerald-900 tracking-tighter drop-shadow-xl pb-2 relative z-10"
+                    className="bg-clip-text text-transparent bg-gradient-to-br from-green-600 via-green-800 to-emerald-900 tracking-tighter drop-shadow-xl pb-1 md:pb-2 relative z-10"
                   >
                     Snakes <br className="md:hidden" /> & Ladders
                   </motion.div>
                 </div>
                 <motion.span 
-                  className="text-5xl md:text-8xl ml-6 inline-block drop-shadow-2xl"
+                  className="text-4xl md:text-8xl ml-3 md:ml-6 inline-block drop-shadow-2xl"
                   animate={{ y: [0, -20, 0] }}
                   transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
                 >🪜</motion.span>
@@ -2607,21 +2728,21 @@ export default function App() {
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.8, type: "spring" }}
-                className="bg-blue-600 text-white px-8 py-2.5 rounded-full font-black uppercase tracking-[0.4em] text-xs md:text-2xl shadow-2xl border-4 border-white/60 -mt-6 md:-mt-10 mb-4 rotate-2 relative z-20"
+                className="bg-blue-600 text-white px-4 md:px-8 py-1.5 md:py-2.5 rounded-full font-black uppercase tracking-[0.4em] text-[10px] md:text-2xl shadow-2xl border-4 border-white/60 -mt-4 md:-mt-10 mb-2 md:mb-4 rotate-2 relative z-20"
               >
                 Tree of Knowledge
               </motion.div>
             </motion.div>
 
-            <div className="glass-panel p-8 md:p-12 rounded-[3rem] w-full max-w-md relative z-10 flex flex-col items-center bg-white/60 backdrop-blur-2xl border border-white/80 shadow-[0_30px_60px_rgba(0,0,0,0.12)] mt-6 ring-1 ring-black/5">
-                <div className="w-full flex flex-col gap-5 relative pt-2">
+            <div className="glass-panel p-6 md:p-12 rounded-[3rem] w-full max-w-md relative z-10 flex flex-col items-center bg-white/60 backdrop-blur-2xl border border-white/80 shadow-[0_30px_60px_rgba(0,0,0,0.12)] mt-2 md:mt-6 ring-1 ring-black/5">
+                <div className="w-full flex flex-col gap-4 md:gap-5 relative pt-2">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 underline underline-offset-8">Cloud Multiplayer Hub</p>
                     <button 
                       onClick={() => setShowInstructions(true)}
-                      className="flex items-center gap-1.5 text-[10px] font-black uppercase bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-all border border-blue-200/50 shadow-sm"
+                      className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-black uppercase bg-blue-50 text-blue-600 px-2 md:px-3 py-1.5 rounded-full hover:bg-blue-100 transition-all border border-blue-200/50 shadow-sm"
                     >
-                      <HelpCircle size={12} /> How to play
+                      <HelpCircle size={10} /> How to play
                     </button>
                   </div>
                   
@@ -2688,19 +2809,19 @@ export default function App() {
                     </div>
                   ) : (
                     <>
-                      <div className="flex gap-3 mt-2">
-                        <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="ENTER CODE" className="flex-1 w-full border-2 border-indigo-100 rounded-xl px-4 text-sm focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 uppercase font-black text-indigo-900 text-center tracking-widest" />
-                        <button id="join-btn" onClick={joinSession} className="bg-white hover:bg-indigo-50 border-2 border-indigo-200 text-indigo-800 font-black py-3 px-6 rounded-xl transition-all shadow-sm hover:shadow-md text-sm uppercase tracking-wider">Join</button>
-                     </div>
+                      <div className="flex gap-2 md:gap-3 mt-1 md:mt-2">
+                        <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="ENTER CODE" className="flex-1 w-full border-2 border-indigo-100 rounded-xl px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 uppercase font-black text-indigo-900 text-center tracking-widest" />
+                        <button id="join-btn" onClick={joinSession} className="bg-white hover:bg-indigo-50 border-2 border-indigo-200 text-indigo-800 font-black py-2 md:py-3 px-4 md:px-6 rounded-xl transition-all shadow-sm hover:shadow-md text-xs md:text-sm uppercase tracking-wider">Join</button>
+                      </div>
                       
                       {!isAdminState && (
-                        <div className="mt-4 flex flex-col items-center">
+                        <div className="mt-2 md:mt-4 flex flex-col items-center text-center">
                           {roomRequest?.status === "pending" ? (
-                            <p className="text-xs font-bold text-indigo-500 animate-pulse bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100">
+                            <p className="text-[9px] md:text-xs font-bold text-indigo-500 animate-pulse bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100">
                               Waiting for admin to approve...
                             </p>
                           ) : (
-                            <button onClick={requestRoomCode} className="text-xs text-indigo-500 hover:text-indigo-700 font-bold underline underline-offset-2 transition-colors">
+                            <button onClick={requestRoomCode} className="text-[9px] md:text-xs text-indigo-500 hover:text-indigo-700 font-bold underline underline-offset-2 transition-colors">
                               Need a room code? Request from admin
                             </button>
                           )}
@@ -2731,40 +2852,40 @@ export default function App() {
                             <option value={5}>5 CPUs</option>
                           </select>
                         </div>
-                        <button onClick={() => startGame(0, false, localCpuCount)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs flex items-center justify-center gap-2">
-                          <UserIcon size={16} /> Start Local Game
+                        <button onClick={() => startGame(0, false, localCpuCount)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-2.5 md:py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-[10px] md:text-xs flex items-center justify-center gap-2">
+                          <UserIcon size={14} /> Start Local Game
                         </button>
                         {hasSavedGame && (
-                          <button onClick={resumeLocalGame} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-xs flex items-center justify-center gap-2">
-                            <Clock size={16} /> Resume Saved Game
+                          <button onClick={resumeLocalGame} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2.5 md:py-3 rounded-xl transition-all shadow-sm uppercase tracking-wider text-[10px] md:text-xs flex items-center justify-center gap-2">
+                            <Clock size={14} /> Resume Saved Game
                           </button>
                         )}
                         <a
                           href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access&body=I would like to request admin access for the Teacher Tech Solution Game app."
-                          className="w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest border border-slate-200"
+                          className="w-full mt-2 md:mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 md:py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest border border-slate-200"
                         >
-                          <Settings size={12} /> Request Admin Access
+                          <Settings size={10} /> Request Admin Access
                         </a>
                       </div>
                     </>
                   )}
                 </div>
 
-                      {isAdminState && (
-                        <button
-                          onClick={() => {
-                            audio.init();
-                            setLocation("/admin");
-                          }}
-                          className="w-full mt-8 bg-black/5 hover:bg-black/10 text-indigo-900/60 hover:text-indigo-900 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
-                        >
-                          <Settings size={14} /> Admin Dashboard
-                        </button>
-                      )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                {isAdminState && (
+                  <button
+                    onClick={() => {
+                      audio.init();
+                      setLocation("/admin");
+                    }}
+                    className="w-full mt-4 md:mt-8 bg-black/5 hover:bg-black/10 text-indigo-900/60 hover:text-indigo-900 font-bold py-2 md:py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-[10px] md:text-xs uppercase tracking-widest"
+                  >
+                    <Settings size={12} /> Admin Dashboard
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       {gameState === "playing" && (
         <motion.div
@@ -3499,6 +3620,50 @@ export default function App() {
                 >
                   Got it, let's play!
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Broadcast Notification (For Admins) */}
+      <AnimatePresence>
+        {showBroadcastNotification && latestBroadcast && (
+          <div className="fixed bottom-6 right-6 z-[500] max-w-sm w-full">
+            <motion.div
+              initial={{ x: 100, opacity: 0, scale: 0.8 }}
+              animate={{ x: 0, opacity: 1, scale: 1 }}
+              exit={{ x: 100, opacity: 0, scale: 0.8 }}
+              className="bg-indigo-600 text-white p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(79,70,229,0.4)] border-4 border-indigo-400 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 blur-2xl"></div>
+              
+              <button 
+                onClick={() => setShowBroadcastNotification(false)}
+                className="absolute top-4 right-4 bg-black/20 hover:bg-black/30 w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0 z-10"
+              >
+                <X size={14} />
+              </button>
+
+              <div className="flex items-start gap-4">
+                <div className="bg-white/20 p-3 rounded-2xl shadow-inner shrink-0">
+                  <ShieldAlert size={24} className="text-white animate-pulse" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200 mb-1 block">Super Admin Broadcast</span>
+                  <p className="text-sm font-black leading-tight drop-shadow-sm mb-3">
+                    {latestBroadcast.message}
+                  </p>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+                    <span className="text-[9px] font-bold text-indigo-200 uppercase">{latestBroadcast.authorEmail}</span>
+                    <button 
+                      onClick={() => setShowBroadcastNotification(false)}
+                      className="bg-white text-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-sm"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>

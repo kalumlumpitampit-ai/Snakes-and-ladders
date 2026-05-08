@@ -46,6 +46,28 @@
         }
       },
       "required": ["hostId", "gameState", "timerMinutes", "players"]
+    },
+    "AdminProfile": {
+      "title": "Admin Profile",
+      "description": "Tracks users who have used admin features",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "lastActive": { "type": "number" },
+        "uid": { "type": "string" }
+      },
+      "required": ["email", "lastActive", "uid"]
+    },
+    "Broadcast": {
+      "title": "Broadcast",
+      "description": "Messages sent by super admin to all admins",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "authorEmail": { "type": "string" }
+      },
+      "required": ["message", "createdAt", "authorEmail"]
     }
   },
   "firestore": {
@@ -54,6 +76,18 @@
         "$ref": "#/entities/Game"
       },
       "description": "Stores multiplayer game sessions"
+    },
+    "admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/AdminProfile"
+      },
+      "description": "List of active admins"
+    },
+    "broadcasts/{broadcastId}": {
+      "schema": {
+        "$ref": "#/entities/Broadcast"
+      },
+      "description": "Admin broadcast messages"
     }
   }
 }
