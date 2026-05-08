@@ -2674,6 +2674,18 @@ export default function App() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             >
+              {/* Request Admin Access Icon */}
+              {!isAdminState && (
+                <a
+                  href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access"
+                  className="fixed bottom-8 right-6 md:bottom-10 md:right-10 z-[60] p-4 rounded-full bg-slate-900 text-white shadow-2xl hover:bg-slate-800 transition-all hover:scale-110 active:scale-95 group flex items-center gap-2"
+                  title="Request Admin Access"
+                >
+                  <Settings size={22} className="group-hover:rotate-45 transition-transform" />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Access</span>
+                </a>
+              )}
+
               {/* New Design Background Blobs */}
               <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
               <motion.div 
@@ -2929,14 +2941,7 @@ export default function App() {
                       </div>
                       <ChevronRight className="transition-transform group-hover:translate-x-1 z-10" />
                     </motion.button>
-                  ) : (
-                    <a
-                      href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access"
-                      className="bg-white/40 hover:bg-white/60 p-4 md:p-5 rounded-2xl md:rounded-[2rem] border border-white/20 shadow-sm flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all"
-                    >
-                      <Settings size={14} /> Request Access
-                    </a>
-                  )}
+                  ) : null}
                 </motion.div>
               </div>
             </div>
