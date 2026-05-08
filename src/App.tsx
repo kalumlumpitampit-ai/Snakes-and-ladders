@@ -335,9 +335,7 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
-  const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
   const [showCopyTooltip, setShowCopyTooltip] = useState(false);
-  const [isAccessButtonExpanded, setIsAccessButtonExpanded] = useState(false);
 
   const copyEmail = () => {
     navigator.clipboard.writeText("teachertechsolution@gmail.com");
@@ -1912,13 +1910,7 @@ export default function App() {
                       Enter Dashboard
                     </button>
                     
-                    <button
-                      type="button"
-                      onClick={() => setShowRequestAccessModal(true)}
-                      className="w-full bg-white/5 hover:bg-white/10 text-slate-400 font-bold py-3 rounded-xl transition-all text-xs uppercase tracking-widest border border-white/5"
-                    >
-                      Don't have a code? Request Access
-                    </button>
+
 
                     <div className="mt-4 text-center px-4">
                       <p className="text-[10px] text-slate-500 font-medium leading-tight">
@@ -2524,109 +2516,9 @@ export default function App() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             >
-              {/* Request Admin Access Icon */}
-              {!isAdminState && (
-                <motion.button
-                  layout
-                  onClick={() => {
-                    if (isAccessButtonExpanded) {
-                      setShowRequestAccessModal(true);
-                      // Reset expansion state after a delay or on modal close
-                    } else {
-                      setIsAccessButtonExpanded(true);
-                    }
-                  }}
-                  className="fixed bottom-8 right-6 md:bottom-10 md:right-10 z-[60] p-4 rounded-full bg-slate-900 text-white shadow-2xl hover:bg-slate-800 transition-all group flex items-center gap-0"
-                  animate={{ 
-                    width: isAccessButtonExpanded ? "auto" : 56,
-                    gap: isAccessButtonExpanded ? 12 : 0
-                  }}
-                  title="Request Admin Access"
-                >
-                  <Settings size={22} className={`${isAccessButtonExpanded ? 'rotate-45 text-blue-400' : ''} transition-all`} />
-                  <motion.span 
-                    initial={false}
-                    animate={{ 
-                      width: isAccessButtonExpanded ? "auto" : 0, 
-                      opacity: isAccessButtonExpanded ? 1 : 0 
-                    }}
-                    className="text-[10px] font-black uppercase tracking-widest overflow-hidden whitespace-nowrap"
-                  >
-                    Request Access
-                  </motion.span>
-                </motion.button>
-              )}
 
-              {/* Request Access Modal */}
-              <AnimatePresence>
-                {showRequestAccessModal && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-                    onClick={() => setShowRequestAccessModal(false)}
-                  >
-                    <motion.div
-                      initial={{ scale: 0.9, y: 20 }}
-                      animate={{ scale: 1, y: 0 }}
-                      exit={{ scale: 0.9, y: 20 }}
-                      className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative overflow-hidden"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600" />
-                      <button 
-                        onClick={() => setShowRequestAccessModal(false)}
-                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-                      >
-                        <X size={20} />
-                      </button>
-                      
-                      <div className="flex flex-col items-center text-center space-y-4">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                          <ShieldAlert size={32} />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Request Access</h3>
-                        <p className="text-sm text-slate-600 leading-relaxed">
-                          Admin login is restricted to authorized educators and game masters. To request your credentials, please contact us.
-                        </p>
-                        
-                        <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between group">
-                          <span className="text-[11px] font-mono font-bold text-slate-500 overflow-hidden text-ellipsis px-2">
-                            teachertechsolution@gmail.com
-                          </span>
-                          <button 
-                            onClick={copyEmail}
-                            className="p-2 hover:bg-white rounded-lg transition-colors relative flex items-center justify-center"
-                          >
-                            {showCopyTooltip ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-blue-500" />}
-                            <AnimatePresence>
-                              {showCopyTooltip && (
-                                <motion.span
-                                  initial={{ opacity: 0, y: 5 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0 }}
-                                  className="absolute -top-10 bg-slate-800 text-white text-[10px] py-1 px-2 rounded-md whitespace-nowrap"
-                                >
-                                  Copied!
-                                </motion.span>
-                              )}
-                            </AnimatePresence>
-                          </button>
-                        </div>
-                        
-                        <a
-                          href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access"
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 group text-sm uppercase tracking-widest"
-                        >
-                          <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                          Open Mail App
-                        </a>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
+
 
               {/* New Design Background Blobs */}
               <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
