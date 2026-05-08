@@ -2698,7 +2698,7 @@ export default function App() {
               />
             </div>
             
-            <div className="relative z-10 w-full max-w-5xl px-4 flex flex-col items-center">
+            <div className="relative z-10 w-full max-w-7xl px-2 md:px-4 flex flex-col items-center">
               <motion.div 
                 initial={{ y: -30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -2715,16 +2715,16 @@ export default function App() {
                     <motion.span 
                       animate={{ rotate: [-10, 10, -10], y: [0, -10, 0] }}
                       transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                      className="text-4xl md:text-8xl drop-shadow-xl select-none"
+                      className="text-5xl md:text-8xl drop-shadow-xl select-none"
                     >🐍</motion.span>
-                    <h1 className="text-4xl md:text-9xl font-black uppercase tracking-tighter leading-tight md:leading-[0.85] flex flex-col items-center md:items-start">
+                    <h1 className="text-6xl md:text-9xl font-black uppercase tracking-tighter leading-none md:leading-[0.85] flex flex-col items-center md:items-start">
                       <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm">Snakes</span>
                       <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4">& Ladders</span>
                     </h1>
                     <motion.span 
                       animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
                       transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 0.5 }}
-                      className="text-4xl md:text-8xl drop-shadow-xl select-none"
+                      className="text-5xl md:text-8xl drop-shadow-xl select-none"
                     >🪜</motion.span>
                   </motion.div>
                   
@@ -2739,7 +2739,7 @@ export default function App() {
                 </div>
               </motion.div>
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 w-full max-w-4xl">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 w-full max-w-6xl">
                 {/* Main Action Card */}
                 <motion.div 
                   initial={{ x: -30, opacity: 0 }}
@@ -2873,7 +2873,7 @@ export default function App() {
                   className="md:col-span-5 flex flex-col gap-6"
                 >
                   {/* Practice Card */}
-                  <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/50 shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex-1 flex flex-col">
+                  <div className="bg-white/60 backdrop-blur-xl p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/50 shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex-1 flex flex-col">
                     <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Local Play</span>
                     <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-6">Solo Mode</h2>
                     
@@ -2920,7 +2920,7 @@ export default function App() {
                         audio.init();
                         setLocation("/admin");
                       }}
-                      className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-xl flex items-center justify-between group overflow-hidden relative"
+                      className="bg-slate-900 text-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-xl flex items-center justify-between group overflow-hidden relative"
                     >
                       <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
                       <div className="flex flex-col items-start z-10">
@@ -2932,7 +2932,7 @@ export default function App() {
                   ) : (
                     <a
                       href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access"
-                      className="bg-white/40 hover:bg-white/60 p-5 rounded-[2rem] border border-white/20 shadow-sm flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all"
+                      className="bg-white/40 hover:bg-white/60 p-4 md:p-5 rounded-2xl md:rounded-[2rem] border border-white/20 shadow-sm flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all"
                     >
                       <Settings size={14} /> Request Access
                     </a>
@@ -3575,7 +3575,7 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col border border-white/20"
+              className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-2xl w-[96%] md:w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col border border-white/20"
             >
               {/* Modal Header */}
               <div className="p-6 sm:p-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
