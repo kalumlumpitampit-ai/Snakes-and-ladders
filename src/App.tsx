@@ -651,7 +651,10 @@ export default function App() {
   };
 
   const createGame = async () => {
-    if (!user) return;
+    if (!user) {
+      alert("Please sign in with Google first to host a game session.");
+      return;
+    }
     const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const initGame = {
       hostId: user.uid,
@@ -1681,15 +1684,32 @@ export default function App() {
                 <p className="text-indigo-300 font-medium text-sm sm:text-base mt-1">Supervise the game remotely</p>
               </div>
             </div>
-            {isAdminState && (
-               <button
-                 onClick={() => setShowHistory(!showHistory)}
-                 className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl transition-colors font-bold text-sm"
-               >
-                 <Clock size={16} />
-                 {showHistory ? "Back to Dashboard" : "Game History"}
-               </button>
-            )}
+            <div className="flex items-center gap-3">
+              {isAdminState && (
+                 <button
+                   onClick={() => setShowHistory(!showHistory)}
+                   className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl transition-colors font-bold text-sm"
+                 >
+                   <Clock size={16} />
+                   {showHistory ? "Back to Dashboard" : "Game History"}
+                 </button>
+              )}
+              {isAdminState && !user && (
+                <button
+                   onClick={login}
+                   className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl transition-colors font-bold text-sm border border-white/20"
+                >
+                   <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                   Connect to Cloud
+                </button>
+              )}
+              {isAdminState && user && (
+                <div className="hidden sm:flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-2 rounded-xl border border-emerald-500/20 text-xs font-bold uppercase tracking-wider">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                  Cloud Syncing
+                </div>
+              )}
+            </div>
           </div>
 
           {!isAdminState ? (
@@ -2369,9 +2389,14 @@ export default function App() {
                     </div>
                   ) : (
                     <>
-                      {isAdminState && (
-                        <button onClick={createGame} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black py-4 rounded-xl transition-all text-sm uppercase tracking-widest shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                      {user ? (
+                        <button onClick={createGame} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black py-4 rounded-xl transition-all text-sm uppercase tracking-widest shadow-lg hover:shadow-xl hover:-translate-y-0.5 mb-2">
                           Create Private Room
+                        </button>
+                      ) : (
+                        <button onClick={login} className="w-full bg-white hover:bg-slate-50 text-slate-800 border-2 border-indigo-100 font-bold py-3.5 rounded-xl transition-all text-xs flex items-center justify-center gap-2 mb-2 shadow-sm">
+                           <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                          Sign in to host a game
                         </button>
                       )}
                      <div className="flex gap-3 mt-2">
