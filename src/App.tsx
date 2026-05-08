@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, getDocs, setDoc, onSnapshot, updateDoc, collection, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, setDoc, onSnapshot, updateDoc, collection, deleteDoc, serverTimestamp } from "firebase/firestore";
 import {
   Settings,
   X,
@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   Send,
   UserCheck,
+  Share2,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -343,16 +344,38 @@ export default function App() {
       console.log("Admin credential login successful");
 
       // Now force Firebase Google Login so they can interact with the cloud
-      if (!auth.currentUser) {
+      let userObj = auth.currentUser;
+      if (!userObj) {
         try {
           const provider = new GoogleAuthProvider();
           provider.setCustomParameters({ prompt: 'select_account' });
-          await signInWithPopup(auth, provider);
+          const result = await signInWithPopup(auth, provider);
+          userObj = result.user;
           console.log("Admin Google login successful after credential login");
+        } catch (err: any) {
+          if (err.code === "auth/popup-closed-by-user") {
+            console.log("Admin closed the Google login popup. Cloud features will be limited.");
+            alert("Google login was cancelled. You are logged in as Admin, but Cloud Control features will be disabled until you sign in with Google.");
+          } else {
+            console.error("Admin Google login failed after credential login:", err);
+          }
+        }
+      }
+
+      // If we have a Google user, register them in Firestore as a permanent admin
+      if (userObj) {
+        try {
+          await setDoc(doc(db, "admins", userObj.uid), {
+            email: userObj.email,
+            activatedAt: serverTimestamp(),
+            role: 'admin',
+            secret: 'admin112119' // Used by security rules to allow initial registration
+          });
+          console.log("Admin persistent registration successful");
         } catch (err) {
-          console.error("Admin Google login failed after credential login:", err);
-          // If they cancel, we keep them in isAdminState but they won't be able to use cloud features
-          // until they sign in later via a button or trigger.
+          console.error("Failed to register permanent admin status:", err);
+          // Even if this fails, they have the session flag so they can see the dashboard,
+          // but Rules will block them if not in the collection.
         }
       }
     } else {
@@ -380,9 +403,24 @@ export default function App() {
   const [joinCode, setJoinCode] = useState<string>("");
   const [isHost, setIsHost] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const leaderboardRef = useRef<HTMLDivElement>(null);
   
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const joinId = params.get('join');
+    if (joinId && !gameId) {
+       const ucase = joinId.toUpperCase();
+       setJoinCode(ucase);
+       // Delay auto-join slightly to allow app to stabilize
+       setTimeout(() => {
+         const joinBtn = document.getElementById('join-btn');
+         if (joinBtn) joinBtn.click();
+       }, 800);
+    }
+  }, [gameId]);
+
   const [localPlayerId] = useState(() => {
     let id = localStorage.getItem("localPlayerId");
     if (!id) {
@@ -592,9 +630,13 @@ export default function App() {
         provider.setCustomParameters({ prompt: 'select_account' });
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
-      } catch (err) {
-        console.error("Auth error:", err);
-        alert("Authentication failed. You must be signed in with Google to manage cloud rooms.");
+      } catch (err: any) {
+        if (err.code === "auth/popup-closed-by-user") {
+          alert("Sign-in cancelled. You must be signed in with Google to approve room requests.");
+        } else {
+          console.error("Auth error:", err);
+          alert("Authentication failed. Google sign-in is required to manage cloud rooms.");
+        }
         return;
       }
     }
@@ -659,6 +701,14 @@ export default function App() {
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
+
+  const handleCopyLink = () => {
+    if (!gameId) return;
+    const shareUrl = `${window.location.origin}/?join=${gameId}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
   const lastProcessedEventRef = useRef<string | null>(null);
   const multiplayerSyncingRef = useRef(false);
   const remoteAnswerResolver = useRef<((val: boolean) => void) | null>(null);
@@ -701,9 +751,13 @@ export default function App() {
         provider.setCustomParameters({ prompt: 'select_account' });
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
-      } catch (err) {
-        console.error("Create Game Auth Error:", err);
-        alert("You must sign in with a Google account to create a cloud game session.");
+      } catch (err: any) {
+        if (err.code === "auth/popup-closed-by-user") {
+          alert("You closed the sign-in window. Google login is required to create a cloud game.");
+        } else {
+          console.error("Create Game Auth Error:", err);
+          alert("A Google account is required to create a cloud game session.");
+        }
         return;
       }
     }
@@ -1736,32 +1790,49 @@ export default function App() {
             <X size={24} className="sm:w-6 sm:h-6" />
           </button>
           
-          <div className="flex items-center gap-4 mb-2 shrink-0 justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-2 shrink-0 justify-between">
             <div className="flex items-center gap-4">
-              <div className="bg-indigo-500 p-3 rounded-2xl shadow-[0_0_20px_rgba(99,102,241,0.5)]">
+              <div className="bg-indigo-500 p-3 rounded-2xl shadow-[0_0_20px_rgba(99,102,241,0.5)] shrink-0">
                 <Settings className="text-white w-6 h-6 sm:w-8 sm:h-8" />
               </div>
-              <div>
-                <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">Game Control Center</h2>
-                <p className="text-indigo-300 font-medium text-sm sm:text-base mt-1">Supervise the game remotely</p>
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-4xl font-black text-white tracking-tight truncate">Game Control Center</h2>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <p className="text-indigo-300 font-medium text-xs sm:text-base">Supervise remotely</p>
+                  <span className="text-slate-600">•</span>
+                  <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                    {user ? (
+                      <>
+                        <CheckCircle2 size={12} />
+                        Connected
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={12} />
+                        Offline
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {isAdminState && (
                  <>
                    <button
                      onClick={() => setShowHistory(!showHistory)}
-                     className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl transition-colors font-bold text-sm"
+                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 sm:px-4 py-2 rounded-xl transition-colors font-bold text-xs sm:text-sm"
                    >
                      <Clock size={16} />
-                     {showHistory ? "Dashboard" : "History"}
+                     <span className="hidden xs:inline">{showHistory ? "Dashboard" : "History"}</span>
+                     <span className="xs:hidden">{showHistory ? "Dash" : "Hist"}</span>
                    </button>
                    <button
                      onClick={adminLogout}
-                     className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl transition-colors font-bold text-sm border border-red-500/20"
+                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 sm:px-4 py-2 rounded-xl transition-colors font-bold text-xs sm:text-sm border border-red-500/20"
                    >
                      <LogOut size={16} />
-                     Exit Admin
+                     Exit
                    </button>
                  </>
               )}
@@ -1891,8 +1962,8 @@ export default function App() {
                       Enter Dashboard
                     </button>
                     <div className="mt-2 text-center">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
-                        Hint: admin / admin112119
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight italic">
+                        Credential verification required for elevation.
                       </p>
                     </div>
                   </form>
@@ -2253,13 +2324,22 @@ export default function App() {
                            <div className="flex items-center gap-2">
                              <span className="text-lg font-black text-white font-mono tracking-widest">{gameId || "LOCAL"}</span>
                              {gameId && (
-                               <button 
-                                 onClick={handleCopyCode} 
-                                 className="text-slate-400 hover:text-white transition-colors"
-                                 title="Copy Room Code"
-                               >
-                                 {copiedCode ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
-                               </button>
+                               <div className="flex items-center gap-2">
+                                 <button 
+                                   onClick={handleCopyCode} 
+                                   className="text-slate-400 hover:text-white transition-colors"
+                                   title="Copy Room Code"
+                                 >
+                                   {copiedCode ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                                 </button>
+                                 <button 
+                                   onClick={handleCopyLink} 
+                                   className="text-slate-400 hover:text-white transition-colors"
+                                   title="Copy Shareable Link"
+                                 >
+                                   {copiedLink ? <Check size={16} className="text-emerald-400" /> : <Share2 size={16} />}
+                                 </button>
+                               </div>
                              )}
                            </div>
                          </div>
