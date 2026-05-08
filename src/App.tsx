@@ -49,12 +49,12 @@ interface ColorOpt {
   bg: string;
 }
 const colors: ColorOpt[] = [
-  { name: "Red Team", hex: "#ef4444", bg: "bg-red-500" },
-  { name: "Green Team", hex: "#22c55e", bg: "bg-green-500" },
-  { name: "Blue Team", hex: "#3b82f6", bg: "bg-blue-500" },
-  { name: "Yellow Team", hex: "#eab308", bg: "bg-yellow-500" },
-  { name: "Purple Team", hex: "#a855f7", bg: "bg-purple-500" },
-  { name: "Orange Team", hex: "#f97316", bg: "bg-orange-500" },
+  { name: "Team 1", hex: "#ef4444", bg: "bg-red-500" },
+  { name: "Team 2", hex: "#22c55e", bg: "bg-green-500" },
+  { name: "Team 3", hex: "#3b82f6", bg: "bg-blue-500" },
+  { name: "Team 4", hex: "#eab308", bg: "bg-yellow-500" },
+  { name: "Team 5", hex: "#a855f7", bg: "bg-purple-500" },
+  { name: "Team 6", hex: "#f97316", bg: "bg-orange-500" },
 ];
 
 const snakes = [
@@ -3167,7 +3167,7 @@ export default function App() {
             {/* CURRENT TURN CARD */}
             <div className="bg-white rounded-3xl p-4 sm:p-5 lg:p-6 flex flex-col items-center shadow-xl w-full transform transition-all order-1 lg:order-none">
               <h2 className="text-xs lg:text-[10px] font-black text-gray-800 uppercase tracking-widest mb-3 lg:mb-2 text-center opacity-70">
-                Current Turn
+                Current Turn: {players[currentTurn]?.name || `Team ${(players[currentTurn]?.id ?? 0) + 1}`}
               </h2>
               <div className="flex items-center gap-3 mb-4 lg:mb-3">
                 <div
