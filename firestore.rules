@@ -110,11 +110,12 @@ service cloud.firestore {
 
     // Requests for Room Entry
     match /room_requests/{requestId} {
-      // Room requests are slightly more public but should be tied to the requester
-      allow get: if isOwner(requestId) || isAdmin();
+      // Room requests are identified by a local random ID (localPlayerId)
+      // Allow creation by anyone (to support non-authed players asking for entry)
+      allow get: if (isSignedIn() && (isOwner(requestId) || isAdmin())) || isValidId(requestId);
       allow list: if isAdmin();
-      allow create: if isSignedIn() && isOwner(requestId) && isValidId(requestId);
-      allow update, delete: if isAdmin() || isOwner(requestId);
+      allow create: if isValidId(requestId) && incoming().keys().hasAll(['status', 'code', 'createdAt']);
+      allow update, delete: if isAdmin() || isValidId(requestId);
     }
 
     // Games

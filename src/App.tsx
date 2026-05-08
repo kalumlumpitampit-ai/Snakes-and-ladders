@@ -693,6 +693,17 @@ export default function App() {
     }
   };
 
+  const rejectRoomRequest = async (requestId: string) => {
+    try {
+      await updateDoc(doc(db, "room_requests", requestId), {
+        status: "rejected"
+      });
+      showMessage("Rejected", "Request has been rejected.");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, "room_requests");
+    }
+  };
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       leaderboardRef.current?.requestFullscreen().catch(err => {
@@ -2442,12 +2453,20 @@ export default function App() {
                                <p className="text-sm font-bold text-slate-300">Player requested access</p>
                                <p className="text-[10px] text-slate-500 uppercase tracking-wider">{new Date(req.createdAt).toLocaleTimeString()}</p>
                              </div>
-                             <button
-                               onClick={() => approveRoomRequest(req.id)}
-                               className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs py-2 px-4 rounded-lg transition-colors uppercase tracking-wider"
-                             >
-                               Approve & Create Room
-                             </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => approveRoomRequest(req.id)}
+                                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs py-2 px-4 rounded-lg transition-colors uppercase tracking-wider"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => rejectRoomRequest(req.id)}
+                                  className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs py-2 px-3 rounded-lg transition-colors uppercase tracking-wider"
+                                >
+                                  Reject
+                                </button>
+                              </div>
                           </div>
                        ))}
                     </div>
@@ -2705,12 +2724,11 @@ export default function App() {
                   onClick={() => {
                     if (isAccessButtonExpanded) {
                       setShowRequestAccessModal(true);
+                      // Reset expansion state after a delay or on modal close
                     } else {
                       setIsAccessButtonExpanded(true);
                     }
                   }}
-                  onHoverStart={() => setIsAccessButtonExpanded(true)}
-                  onHoverEnd={() => setIsAccessButtonExpanded(false)}
                   className="fixed bottom-8 right-6 md:bottom-10 md:right-10 z-[60] p-4 rounded-full bg-slate-900 text-white shadow-2xl hover:bg-slate-800 transition-all group flex items-center gap-0"
                   animate={{ 
                     width: isAccessButtonExpanded ? "auto" : 56,
@@ -2718,7 +2736,7 @@ export default function App() {
                   }}
                   title="Request Admin Access"
                 >
-                  <Settings size={22} className={`${isAccessButtonExpanded ? 'rotate-45' : ''} transition-transform`} />
+                  <Settings size={22} className={`${isAccessButtonExpanded ? 'rotate-45 text-blue-400' : ''} transition-all`} />
                   <motion.span 
                     initial={false}
                     animate={{ 
@@ -2990,6 +3008,26 @@ export default function App() {
                                   <p className="text-[9px] text-slate-500 font-medium max-w-[200px]">
                                     Your request has been sent! An admin will review it shortly. Keep this screen open.
                                   </p>
+                                </motion.div>
+                              ) : roomRequest?.status === "rejected" ? (
+                                <motion.div 
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  className="flex flex-col items-center gap-3 bg-red-50 p-4 rounded-2xl border border-red-100"
+                                >
+                                  <div className="flex items-center gap-2 text-red-600 font-black text-[10px] uppercase tracking-widest">
+                                    <XCircle size={16} />
+                                    <span>Request Denied</span>
+                                  </div>
+                                  <p className="text-[9px] text-slate-500 font-medium max-w-[200px]">
+                                    Your request was not approved this time. Please check with your teacher or host.
+                                  </p>
+                                  <button 
+                                    onClick={requestRoomCode}
+                                    className="text-[9px] font-black underline text-red-600 uppercase tracking-tighter"
+                                  >
+                                    Try Once More
+                                  </button>
                                 </motion.div>
                               ) : (
                                 <button 
