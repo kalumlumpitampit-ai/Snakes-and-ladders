@@ -335,6 +335,14 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
+  const [showCopyTooltip, setShowCopyTooltip] = useState(false);
+
+  const copyEmail = () => {
+    navigator.clipboard.writeText("teachertechsolution@gmail.com");
+    setShowCopyTooltip(true);
+    setTimeout(() => setShowCopyTooltip(false), 2000);
+  };
 
   const handleAdminLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -2039,6 +2047,21 @@ export default function App() {
                       <LogIn size={20} />
                       Enter Dashboard
                     </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setShowRequestAccessModal(true)}
+                      className="w-full bg-white/5 hover:bg-white/10 text-slate-400 font-bold py-3 rounded-xl transition-all text-xs uppercase tracking-widest border border-white/5"
+                    >
+                      Don't have a code? Request Access
+                    </button>
+
+                    <div className="mt-4 text-center px-4">
+                      <p className="text-[10px] text-slate-500 font-medium leading-tight">
+                        <span className="text-yellow-500/80">Tip:</span> If you are on mobile and using Google Login, please ensure popups are allowed for this site.
+                      </p>
+                    </div>
+
                     <div className="mt-2 text-center">
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight italic">
                         Credential verification required for elevation.
@@ -2676,15 +2699,86 @@ export default function App() {
             >
               {/* Request Admin Access Icon */}
               {!isAdminState && (
-                <a
-                  href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access"
+                <button
+                  onClick={() => setShowRequestAccessModal(true)}
                   className="fixed bottom-8 right-6 md:bottom-10 md:right-10 z-[60] p-4 rounded-full bg-slate-900 text-white shadow-2xl hover:bg-slate-800 transition-all hover:scale-110 active:scale-95 group flex items-center gap-2"
                   title="Request Admin Access"
                 >
                   <Settings size={22} className="group-hover:rotate-45 transition-transform" />
                   <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Access</span>
-                </a>
+                </button>
               )}
+
+              {/* Request Access Modal */}
+              <AnimatePresence>
+                {showRequestAccessModal && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                    onClick={() => setShowRequestAccessModal(false)}
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative overflow-hidden"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600" />
+                      <button 
+                        onClick={() => setShowRequestAccessModal(false)}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={20} />
+                      </button>
+                      
+                      <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                          <ShieldAlert size={32} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Request Access</h3>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          Admin login is restricted to authorized educators and game masters. To request your credentials, please contact us.
+                        </p>
+                        
+                        <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between group">
+                          <span className="text-[11px] font-mono font-bold text-slate-500 overflow-hidden text-ellipsis px-2">
+                            teachertechsolution@gmail.com
+                          </span>
+                          <button 
+                            onClick={copyEmail}
+                            className="p-2 hover:bg-white rounded-lg transition-colors relative flex items-center justify-center"
+                          >
+                            {showCopyTooltip ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-blue-500" />}
+                            <AnimatePresence>
+                              {showCopyTooltip && (
+                                <motion.span
+                                  initial={{ opacity: 0, y: 5 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0 }}
+                                  className="absolute -top-10 bg-slate-800 text-white text-[10px] py-1 px-2 rounded-md whitespace-nowrap"
+                                >
+                                  Copied!
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                          </button>
+                        </div>
+                        
+                        <a
+                          href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access"
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 group text-sm uppercase tracking-widest"
+                        >
+                          <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                          Open Mail App
+                        </a>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* New Design Background Blobs */}
               <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -2722,22 +2816,26 @@ export default function App() {
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.8 }}
-                    className="flex items-center justify-center gap-3 md:gap-8 mb-4 px-2"
+                    className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-8 px-4"
                   >
-                    <motion.span 
-                      animate={{ rotate: [-10, 10, -10], y: [0, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                      className="text-5xl md:text-8xl drop-shadow-xl select-none"
-                    >🐍</motion.span>
-                    <h1 className="text-6xl md:text-9xl font-black uppercase tracking-tighter leading-none md:leading-[0.85] flex flex-col items-center md:items-start">
-                      <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm">Snakes</span>
-                      <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4">& Ladders</span>
-                    </h1>
-                    <motion.span 
-                      animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
-                      transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 0.5 }}
-                      className="text-5xl md:text-8xl drop-shadow-xl select-none"
-                    >🪜</motion.span>
+                    <div className="flex items-center gap-4 md:gap-8">
+                      <motion.span 
+                        animate={{ rotate: [-10, 10, -10], y: [0, -10, 0] }}
+                        transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                        className="text-6xl md:text-8xl drop-shadow-xl select-none"
+                      >🐍</motion.span>
+                      
+                      <h1 className="text-5xl sm:text-6xl md:text-9xl font-black uppercase tracking-tighter leading-[0.8] md:leading-[0.85] flex flex-col items-center md:items-start">
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm">Snakes</span>
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4">& Ladders</span>
+                      </h1>
+
+                      <motion.span 
+                        animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+                        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 0.5 }}
+                        className="text-6xl md:text-8xl drop-shadow-xl select-none"
+                      >🪜</motion.span>
+                    </div>
                   </motion.div>
                   
                   <motion.div
@@ -2857,16 +2955,29 @@ export default function App() {
                           {!isAdminState && (
                             <div className="text-center">
                               {roomRequest?.status === "pending" ? (
-                                <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full border border-amber-100 animate-pulse">
-                                  <Clock size={14} />
-                                  <span className="text-[10px] font-black uppercase tracking-widest">Pending Approval</span>
-                                </div>
+                                <motion.div 
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  className="flex flex-col items-center gap-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-100"
+                                >
+                                  <div className="flex items-center gap-2 text-blue-600">
+                                    <Clock size={16} className="animate-spin-slow" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Waiting for Admin...</span>
+                                  </div>
+                                  <p className="text-[9px] text-slate-500 font-medium max-w-[200px]">
+                                    Your request has been sent! An admin will review it shortly. Keep this screen open.
+                                  </p>
+                                </motion.div>
                               ) : (
                                 <button 
                                   onClick={requestRoomCode} 
-                                  className="text-[10px] text-slate-400 hover:text-blue-600 font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mx-auto group"
+                                  className="text-[10px] text-slate-400 hover:text-blue-600 font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 mx-auto group bg-slate-50 hover:bg-blue-50/50 px-6 py-3 rounded-xl border border-dashed border-slate-200 hover:border-blue-200"
                                 >
-                                  Need a code? <span className="underline underline-offset-4 group-hover:no-underline text-blue-600">Ask Admin</span>
+                                  <div className="flex items-center gap-2">
+                                    <HelpCircle size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+                                    <span>Don't have a Room Code?</span>
+                                  </div>
+                                  <span className="text-blue-600 underline underline-offset-4 font-black">ASK ADMIN FOR ACCESS</span>
                                 </button>
                               )}
                             </div>
