@@ -297,7 +297,7 @@ const diceConfig: Record<number, number[]> = {
 
 export default function App() {
   const [location, setLocation] = useLocation();
-  const [gameState, setGameState] = useState<"setup" | "playing">("setup");
+  const [gameState, setGameState] = useState<"setup" | "playing" | "finished">("setup");
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentTurn, setCurrentTurn] = useState<number>(0);
   const [isMoving, setIsMoving] = useState<boolean>(false);
@@ -317,12 +317,18 @@ export default function App() {
   // Multiplayer State
   const [user, setUser] = useState<User | null>(null);
   const [isAdminState, setIsAdminState] = useState<boolean>(false);
+  const adminLogout = () => {
+    setIsAdminState(false);
+    sessionStorage.removeItem("isAdmin");
+    auth.signOut();
+  };
+
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
 
-  const handleAdminLogin = (e: FormEvent) => {
+  const handleAdminLogin = async (e: FormEvent) => {
     e.preventDefault();
     const cleanUser = adminUsername.trim().toLowerCase();
     const cleanPass = adminPassword.trim();
@@ -330,10 +336,25 @@ export default function App() {
     console.log("Admin login attempt with:", cleanUser);
     
     if (cleanUser === "admin" && cleanPass === "admin112119") {
+      // First set the local admin state
       setIsAdminState(true);
       setLoginError("");
       sessionStorage.setItem("isAdmin", "true");
-      console.log("Admin login successful");
+      console.log("Admin credential login successful");
+
+      // Now force Firebase Google Login so they can interact with the cloud
+      if (!auth.currentUser) {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithPopup(auth, provider);
+          console.log("Admin Google login successful after credential login");
+        } catch (err) {
+          console.error("Admin Google login failed after credential login:", err);
+          // If they cancel, we keep them in isAdminState but they won't be able to use cloud features
+          // until they sign in later via a button or trigger.
+        }
+      }
     } else {
       setLoginError("Invalid credentials. Please check your username and password.");
       console.log("Admin login failed: Incorrect credentials");
@@ -564,13 +585,28 @@ export default function App() {
   }, [user, gameId, isAdminState]);
 
   const approveRoomRequest = async (requestId: string) => {
-    if (!user) return;
+    let currentUser = auth.currentUser;
+    if (!currentUser) {
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const result = await signInWithPopup(auth, provider);
+        currentUser = result.user;
+      } catch (err) {
+        console.error("Auth error:", err);
+        alert("Authentication failed. You must be signed in with Google to manage cloud rooms.");
+        return;
+      }
+    }
+    
+    if (!currentUser) return;
+
     try {
       let codeToShare = gameId;
       if (!codeToShare) {
         codeToShare = Math.random().toString(36).substring(2, 8).toUpperCase();
         const initGame = {
-          hostId: user.uid,
+          hostId: currentUser.uid,
           gameState: "setup",
           timerMinutes: timerMinutes,
           questionTimerSeconds: questionTimerSeconds,
@@ -591,9 +627,11 @@ export default function App() {
          status: "approved",
          code: codeToShare
       });
-      showMessage("Approved", "Code sent to user. You are now supervising this room.");
+      showMessage("Approved", "Session created successfully. Code sent to user.");
     } catch (e) {
+      console.error("Room Approval Error:", e);
       handleFirestoreError(e, OperationType.UPDATE, "room_requests");
+      alert("Failed to create session. Please check your internet connection.");
     }
   };
 
@@ -654,7 +692,9 @@ export default function App() {
   };
 
   const createGame = async () => {
-    let currentUser = user;
+    let currentUser = auth.currentUser; // Use auth.currentUser directly for the most up-to-date state
+    
+    // If not signed into Firebase, force it now
     if (!currentUser) {
       try {
         const provider = new GoogleAuthProvider();
@@ -662,12 +702,17 @@ export default function App() {
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
       } catch (err) {
-        console.error(err);
+        console.error("Create Game Auth Error:", err);
+        alert("You must sign in with a Google account to create a cloud game session.");
         return;
       }
     }
     
-    if (!currentUser) return;
+    if (!currentUser) {
+      alert("Search for a Google account failed. Cloud connection required.");
+      return;
+    }
+
     const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const initGame = {
       hostId: currentUser.uid,
@@ -682,12 +727,16 @@ export default function App() {
       questionBank: questionBankRef.current,
       questionIndex: 0
     };
+
     try {
       await setDoc(doc(db, "games", newCode), initGame);
       setGameId(newCode);
       setIsHost(true);
+      showMessage("Success", `Game room ${newCode} created successfully! You can now share this code.`);
     } catch (e) {
+      console.error("Create Game Firestore Error:", e);
       handleFirestoreError(e, OperationType.CREATE, "games");
+      alert("Failed to create game session in the cloud. Check permissions.");
     }
   };
 
@@ -1699,13 +1748,22 @@ export default function App() {
             </div>
             <div className="flex items-center gap-3">
               {isAdminState && (
-                 <button
-                   onClick={() => setShowHistory(!showHistory)}
-                   className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl transition-colors font-bold text-sm"
-                 >
-                   <Clock size={16} />
-                   {showHistory ? "Back to Dashboard" : "Game History"}
-                 </button>
+                 <>
+                   <button
+                     onClick={() => setShowHistory(!showHistory)}
+                     className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl transition-colors font-bold text-sm"
+                   >
+                     <Clock size={16} />
+                     {showHistory ? "Dashboard" : "History"}
+                   </button>
+                   <button
+                     onClick={adminLogout}
+                     className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl transition-colors font-bold text-sm border border-red-500/20"
+                   >
+                     <LogOut size={16} />
+                     Exit Admin
+                   </button>
+                 </>
               )}
             </div>
           </div>
@@ -2177,10 +2235,10 @@ export default function App() {
                     </h3>
                   </div>
 
-                  {!gameId && players.length === 0 ? (
+                  {!gameId ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-slate-500 border-2 border-dashed border-slate-700 rounded-2xl p-10 mt-4 min-h-[300px]">
                       <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                      <p className="font-bold text-lg mb-2 text-slate-300">No Game Running</p>
+                      <p className="font-bold text-lg mb-2 text-slate-300">No Remote Game Active</p>
                       <button onClick={createGame} className="bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(79,70,229,0.4)] uppercase tracking-widest text-sm">
                          Create Game Session
                       </button>
