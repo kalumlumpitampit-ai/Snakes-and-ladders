@@ -108,16 +108,6 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Requests for Room Entry
-    match /room_requests/{requestId} {
-      // Room requests are identified by a local random ID (localPlayerId)
-      // Allow creation by anyone (to support non-authed players asking for entry)
-      allow get: if (isSignedIn() && (isOwner(requestId) || isAdmin())) || isValidId(requestId);
-      allow list: if isAdmin();
-      allow create: if isValidId(requestId) && incoming().keys().hasAll(['status', 'code', 'createdAt']);
-      allow update, delete: if isAdmin() || isValidId(requestId);
-    }
-
     // Games
     match /games/{gameId} {
       // List games: either you own it or you are an admin

@@ -448,77 +448,6 @@ export default function App() {
     return id;
   });
 
-  const [roomRequest, setRoomRequest] = useState<{status: string, code: string | null} | null>(null);
-
-  const requestRoomCode = async () => {
-    try {
-      await setDoc(doc(db, "room_requests", localPlayerId), {
-        status: "pending",
-        code: null,
-        createdAt: Date.now(),
-      });
-      showMessage("Request Sent", "Your request for a room code has been sent to the admin. Please wait.");
-    } catch (e) {
-      handleFirestoreError(e, OperationType.CREATE, "room_requests");
-    }
-  };
-
-  useEffect(() => {
-    if (!localPlayerId) return;
-    const unsub = onSnapshot(doc(db, "room_requests", localPlayerId), (snap) => {
-        if(snap.exists()) {
-           setRoomRequest(snap.data() as any);
-        } else {
-           setRoomRequest(null);
-        }
-    }, (error) => handleFirestoreError(error, OperationType.GET, `room_requests/${localPlayerId}`));
-    return () => unsub();
-  }, [localPlayerId]);
-
-  useEffect(() => {
-    if (roomRequest?.status === "approved" && roomRequest?.code) {
-       const autoJoin = async () => {
-         const code = roomRequest.code!;
-         try {
-           const docRef = doc(db, "games", code);
-           const ds = await getDoc(docRef);
-           if (ds.exists()) {
-             const gameData = ds.data();
-             const lobbyData = gameData.lobby || {};
-             
-             if (Object.keys(lobbyData).length >= 5 && !lobbyData[localPlayerId]) {
-                 showMessage("Room Full", "This game already has the maximum of 5 teams.");
-                 await deleteDoc(doc(db, "room_requests", localPlayerId));
-                 return;
-             }
-
-             setGameId(code);
-             setIsHost(gameData.hostId === user?.uid);
-             setJoinCode(code);
-             
-             if (!lobbyData[localPlayerId]) {
-                await updateDoc(docRef, {
-                  [`lobby.${localPlayerId}`]: {
-                     name: "Player",
-                     colorIndex: null
-                  }
-                });
-             }
-             await deleteDoc(doc(db, "room_requests", localPlayerId));
-           } else {
-             showMessage("Game Not Found", "The assigned room code could not be found.");
-             await deleteDoc(doc(db, "room_requests", localPlayerId));
-           }
-         } catch(e) {
-           console.error("Auto-join failed", e);
-         }
-       };
-       autoJoin();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomRequest?.status, roomRequest?.code]);
-
-  const [pendingRequests, setPendingRequests] = useState<{id: string, createdAt: number}[]>([]);
   const [pendingAdminRequests, setPendingAdminRequests] = useState<{id: string, email: string, reason: string, createdAt: number}[]>([]);
   const [myAdminRequestStatus, setMyAdminRequestStatus] = useState<{status: string, reason?: string} | null>(null);
   const [adminRequestReason, setAdminRequestReason] = useState("");
@@ -605,16 +534,6 @@ export default function App() {
       }
     });
 
-    const unsub = onSnapshot(collection(db, "room_requests"), (snapshot) => {
-        const reqs: any[] = [];
-        snapshot.forEach(docSnap => {
-            if (docSnap.data().status === "pending") {
-                reqs.push({id: docSnap.id, ...docSnap.data()});
-            }
-        });
-        setPendingRequests(reqs.sort((a,b) => b.createdAt - a.createdAt));
-    }, (error) => handleFirestoreError(error, OperationType.LIST, "room_requests"));
-    
     const unsubAdminReqs = onSnapshot(collection(db, "admin_requests"), (snapshot) => {
         const reqs: any[] = [];
         snapshot.forEach(docSnap => {
@@ -630,79 +549,12 @@ export default function App() {
         handleFirestoreError(error, OperationType.LIST, "admin_requests");
       }
     });
-    
+
     return () => {
-       unsub();
        unsubAdminReqs();
        if (unsubGames) unsubGames();
     };
   }, [user, gameId, isAdminState]);
-
-  const approveRoomRequest = async (requestId: string) => {
-    let currentUser = auth.currentUser;
-    if (!currentUser) {
-      try {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        const result = await signInWithPopup(auth, provider);
-        currentUser = result.user;
-      } catch (err: any) {
-        if (err.code === "auth/popup-closed-by-user") {
-          alert("Sign-in cancelled. You must be signed in with Google to approve room requests.");
-        } else {
-          console.error("Auth error:", err);
-          alert("Authentication failed. Google sign-in is required to manage cloud rooms.");
-        }
-        return;
-      }
-    }
-    
-    if (!currentUser) return;
-
-    try {
-      let codeToShare = gameId;
-      if (!codeToShare) {
-        codeToShare = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const initGame = {
-          hostId: currentUser.uid,
-          gameState: "setup",
-          timerMinutes: timerMinutes,
-          questionTimerSeconds: questionTimerSeconds,
-          startedAt: null,
-          currentTurn: 0,
-          players: [],
-          lobby: {},
-          lastEvent: null,
-          questionBank: questionBankRef.current,
-          questionIndex: 0
-        };
-        await setDoc(doc(db, "games", codeToShare), initGame);
-        setGameId(codeToShare);
-        setIsHost(true);
-      }
-      
-      await updateDoc(doc(db, "room_requests", requestId), {
-         status: "approved",
-         code: codeToShare
-      });
-      showMessage("Approved", "Session created successfully. Code sent to user.");
-    } catch (e) {
-      console.error("Room Approval Error:", e);
-      handleFirestoreError(e, OperationType.UPDATE, "room_requests");
-      alert("Failed to create session. Please check your internet connection.");
-    }
-  };
-
-  const rejectRoomRequest = async (requestId: string) => {
-    try {
-      await updateDoc(doc(db, "room_requests", requestId), {
-        status: "rejected"
-      });
-      showMessage("Rejected", "Request has been rejected.");
-    } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, "room_requests");
-    }
-  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -2439,40 +2291,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* ROOM REQUESTS PANEL */}
-                {pendingRequests.length > 0 && (
-                  <div className="bg-slate-800 rounded-3xl p-5 sm:p-6 border border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
-                    <h3 className="text-sm font-black text-indigo-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                       <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-                       Room Requests ({pendingRequests.length})
-                    </h3>
-                    <div className="flex flex-col gap-3">
-                       {pendingRequests.map(req => (
-                          <div key={req.id} className="bg-slate-900 rounded-xl p-3 border border-slate-700 flex items-center justify-between">
-                             <div>
-                               <p className="text-sm font-bold text-slate-300">Player requested access</p>
-                               <p className="text-[10px] text-slate-500 uppercase tracking-wider">{new Date(req.createdAt).toLocaleTimeString()}</p>
-                             </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => approveRoomRequest(req.id)}
-                                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs py-2 px-4 rounded-lg transition-colors uppercase tracking-wider"
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => rejectRoomRequest(req.id)}
-                                  className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs py-2 px-3 rounded-lg transition-colors uppercase tracking-wider"
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                          </div>
-                       ))}
-                    </div>
-                  </div>
-                )}
-
+                {/* LIVE GAME STATUS */}
                 <div className="bg-slate-800 rounded-3xl p-5 sm:p-6 border border-slate-700 shadow-xl flex-1 flex flex-col">
                   
                   <div className="flex sm:items-center justify-between flex-col sm:flex-row gap-4 mb-6">
@@ -2992,57 +2811,6 @@ export default function App() {
                               Join Match <Users size={18} />
                             </button>
                           </div>
-
-                          {!isAdminState && (
-                            <div className="text-center">
-                              {roomRequest?.status === "pending" ? (
-                                <motion.div 
-                                  initial={{ opacity: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  className="flex flex-col items-center gap-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-100"
-                                >
-                                  <div className="flex items-center gap-2 text-blue-600">
-                                    <Clock size={16} className="animate-spin-slow" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Waiting for Admin...</span>
-                                  </div>
-                                  <p className="text-[9px] text-slate-500 font-medium max-w-[200px]">
-                                    Your request has been sent! An admin will review it shortly. Keep this screen open.
-                                  </p>
-                                </motion.div>
-                              ) : roomRequest?.status === "rejected" ? (
-                                <motion.div 
-                                  initial={{ opacity: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  className="flex flex-col items-center gap-3 bg-red-50 p-4 rounded-2xl border border-red-100"
-                                >
-                                  <div className="flex items-center gap-2 text-red-600 font-black text-[10px] uppercase tracking-widest">
-                                    <XCircle size={16} />
-                                    <span>Request Denied</span>
-                                  </div>
-                                  <p className="text-[9px] text-slate-500 font-medium max-w-[200px]">
-                                    Your request was not approved this time. Please check with your teacher or host.
-                                  </p>
-                                  <button 
-                                    onClick={requestRoomCode}
-                                    className="text-[9px] font-black underline text-red-600 uppercase tracking-tighter"
-                                  >
-                                    Try Once More
-                                  </button>
-                                </motion.div>
-                              ) : (
-                                <button 
-                                  onClick={requestRoomCode} 
-                                  className="text-[10px] text-slate-400 hover:text-blue-600 font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 mx-auto group bg-slate-50 hover:bg-blue-50/50 px-6 py-3 rounded-xl border border-dashed border-slate-200 hover:border-blue-200"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <HelpCircle size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-                                    <span>Don't have a Room Code?</span>
-                                  </div>
-                                  <span className="text-blue-600 underline underline-offset-4 font-black">ASK ADMIN FOR ACCESS</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
