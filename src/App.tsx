@@ -2551,7 +2551,7 @@ export default function App() {
               initial={{ y: -30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 text-center mb-10 flex flex-col items-center w-full"
+              className="relative z-10 text-center mb-6 flex flex-col items-center w-full"
             >
               {/* Floating Bubbles */}
               <div className="absolute inset-0 -z-10 pointer-events-none">
@@ -2568,7 +2568,7 @@ export default function App() {
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    className="absolute w-24 h-24 rounded-full bg-white/20 blur-xl"
+                    className="absolute w-16 h-16 rounded-full bg-white/20 blur-xl"
                     style={{
                       left: `${15 + i * 15}%`,
                       top: `${20 + (i % 3) * 20}%`,
@@ -2578,36 +2578,36 @@ export default function App() {
               </div>
 
               {/* Title Text */}
-              <div className="relative z-10 flex items-center justify-center text-5xl md:text-8xl font-black uppercase tracking-tighter text-green-800 drop-shadow-lg pb-4 px-8">
+              <div className="relative z-10 flex items-center justify-center text-6xl md:text-[8rem] font-black uppercase tracking-tighter text-green-800 drop-shadow-2xl pb-4 px-4 leading-none">
                 <motion.span 
-                  className="text-red-500 mr-4 inline-block drop-shadow-xl origin-bottom"
+                  className="text-5xl md:text-8xl mr-6 inline-block drop-shadow-2xl origin-bottom"
                   animate={{ 
-                    rotate: [-5, 5, -5],
-                    scale: [1, 1.05, 1] 
+                    rotate: [-8, 8, -8],
+                    scale: [1, 1.1, 1] 
                   }}
                   transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
                 >🐍</motion.span>
                 <div className="relative">
                   <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.8 }}
-                    className="bg-clip-text text-transparent bg-gradient-to-br from-green-600 via-green-800 to-emerald-900 tracking-tighter drop-shadow-md pb-2 relative z-10"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="bg-clip-text text-transparent bg-gradient-to-br from-green-600 via-green-800 to-emerald-900 tracking-tighter drop-shadow-xl pb-2 relative z-10"
                   >
-                    Snakes & Ladders
+                    Snakes <br className="md:hidden" /> & Ladders
                   </motion.div>
                 </div>
                 <motion.span 
-                  className="text-yellow-600 ml-4 inline-block drop-shadow-xl"
-                  animate={{ y: [0, -15, 0] }}
+                  className="text-5xl md:text-8xl ml-6 inline-block drop-shadow-2xl"
+                  animate={{ y: [0, -20, 0] }}
                   transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
                 >🪜</motion.span>
               </div>
               <motion.div 
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.5, type: "spring" }}
-                className="bg-blue-600 text-white px-6 py-2 rounded-full font-black uppercase tracking-[0.3em] text-sm md:text-xl shadow-xl border-4 border-white/50 -mt-2 rotate-1"
+                transition={{ delay: 0.8, type: "spring" }}
+                className="bg-blue-600 text-white px-8 py-2.5 rounded-full font-black uppercase tracking-[0.4em] text-xs md:text-2xl shadow-2xl border-4 border-white/60 -mt-6 md:-mt-10 mb-4 rotate-2 relative z-20"
               >
                 Tree of Knowledge
               </motion.div>
