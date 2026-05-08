@@ -2674,8 +2674,8 @@ export default function App() {
                       >🐍</motion.span>
                       
                       <h1 className="text-5xl sm:text-6xl md:text-9xl font-black uppercase tracking-tighter leading-[0.8] md:leading-[0.85] flex flex-col items-center md:items-start">
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm">Snakes</span>
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4">& Ladders</span>
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm px-4 py-2">Snakes</span>
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4 px-4 py-2">& Ladders</span>
                       </h1>
 
                       <motion.span 
