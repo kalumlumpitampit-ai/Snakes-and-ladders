@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, getDocs, setDoc, onSnapshot, updateDoc, collection, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, getDocs, setDoc, onSnapshot, updateDoc, collection, deleteDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import {
   Settings,
   X,
@@ -1396,20 +1396,39 @@ export default function App() {
   };
 
   const endAllGames = async () => {
+    if (!isAdminState) {
+      alert("Elevation required to perform this action.");
+      return;
+    }
+
     if (
       window.confirm(
-        "Are you sure you want to stop and end ALL active games for all players?"
+        "Are you sure you want to stop and end ALL active games for all players? This action is irreversible."
       )
     ) {
       try {
+        console.log("Admin attempting to end all games...");
         const querySnapshot = await getDocs(collection(db, "games"));
-        const batchPromises = querySnapshot.docs.map(document => 
-          deleteDoc(doc(db, "games", document.id))
-        );
-        await Promise.all(batchPromises);
-        alert("All games have been ended.");
+        
+        if (querySnapshot.empty) {
+          alert("No active games found to end.");
+          return;
+        }
+
+        const count = querySnapshot.size;
+        const batch = writeBatch(db);
+        
+        querySnapshot.docs.forEach((docSnap) => {
+          batch.delete(docSnap.ref);
+        });
+        
+        await batch.commit();
+        console.log(`Successfully ended ${count} games.`);
+        alert(`Successfully ended all ${count} active games.`);
       } catch (e) {
+        console.error("Force End Error:", e);
         handleFirestoreError(e, OperationType.DELETE, "games");
+        alert("An error occurred while ending games. Check the console for details.");
       }
     }
   };
