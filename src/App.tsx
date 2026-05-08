@@ -399,6 +399,7 @@ export default function App() {
   }, [currentTurn, gameState, players.length]);
 
   const [gameId, setGameId] = useState<string | null>(null);
+  const [adminEnded, setAdminEnded] = useState(false);
   const [lobbyData, setLobbyData] = useState<Record<string, {name: string, colorIndex: number | null}>>({});
   const [joinCode, setJoinCode] = useState<string>("");
   const [isHost, setIsHost] = useState(false);
@@ -901,7 +902,7 @@ export default function App() {
         setGameId(null);
         setIsHost(false);
         if (wasActive) {
-            alert("This game has been ended by the host.");
+            setAdminEnded(true);
         }
         return;
       }
@@ -2506,6 +2507,31 @@ export default function App() {
             </div>
           )}
         </div>
+        {/* Admin Ended Game Notification Modal */}
+        {adminEnded && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border-4 border-red-500"
+            >
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <XCircle size={40} className="text-red-500" />
+              </div>
+              <h2 className="text-3xl font-black text-slate-900 mb-2 uppercase tracking-tight">Session Ended</h2>
+              <p className="text-slate-600 mb-8 font-medium">The administrator has forcibly closed this game room.</p>
+              <button
+                onClick={() => {
+                  setAdminEnded(false);
+                  setLocation("/");
+                }}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg"
+              >
+                Return to Home
+              </button>
+            </motion.div>
+          </div>
+        )}
       </div>
     );
   }
@@ -2713,6 +2739,12 @@ export default function App() {
                             <Clock size={16} /> Resume Saved Game
                           </button>
                         )}
+                        <a
+                          href="mailto:teachertechsolution@gmail.com?subject=Request Admin Access&body=I would like to request admin access for the Teacher Tech Solution Game app."
+                          className="w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest border border-slate-200"
+                        >
+                          <Settings size={12} /> Request Admin Access
+                        </a>
                       </div>
                     </>
                   )}
@@ -3430,6 +3462,35 @@ export default function App() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin Ended Game Notification Modal */}
+      <AnimatePresence>
+        {adminEnded && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border-4 border-red-500"
+            >
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <XCircle size={40} className="text-red-500" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Session Ended</h2>
+              <p className="text-slate-600 mb-8 font-medium italic">"The administrator has forcibly closed this game room."</p>
+              <button
+                onClick={() => {
+                  setAdminEnded(false);
+                  setLocation("/");
+                }}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg"
+              >
+                Return to Home
+              </button>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
