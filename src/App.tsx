@@ -845,7 +845,7 @@ export default function App() {
   };
 
   const startMultiplayerGame = async () => {
-    if (!gameId || !isHost) return;
+    if (!gameId || (!isHost && !isAdminState)) return;
     audio.init();
     if (questionBankRef.current.length === 0) {
       alert("Teacher! Please add at least one question in the Teacher Panel first.");
@@ -1415,16 +1415,22 @@ export default function App() {
           return;
         }
 
-        const count = querySnapshot.size;
-        const batch = writeBatch(db);
+        const docs = querySnapshot.docs;
+        const total = docs.length;
         
-        querySnapshot.docs.forEach((docSnap) => {
-          batch.delete(docSnap.ref);
-        });
+        // Firestore batches have a limit of 500 operations
+        for (let i = 0; i < docs.length; i += 500) {
+          const batch = writeBatch(db);
+          const chunk = docs.slice(i, i + 500);
+          chunk.forEach((docSnap) => {
+            batch.delete(docSnap.ref);
+          });
+          await batch.commit();
+        }
         
-        await batch.commit();
-        console.log(`Successfully ended ${count} games.`);
-        alert(`Successfully ended all ${count} active games.`);
+        console.log(`Successfully ended ${total} games.`);
+        setGameId(null); // Reset admin's local game tracking
+        alert(`Successfully ended all ${total} active games.`);
       } catch (e) {
         console.error("Force End Error:", e);
         handleFirestoreError(e, OperationType.DELETE, "games");
@@ -1804,56 +1810,52 @@ export default function App() {
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-6 relative h-full min-h-0">
           <button
             onClick={closeTeacherPanel}
-            className="absolute -top-2 -right-2 sm:top-0 sm:right-0 text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-full shadow-lg z-10"
+            className="absolute top-2 right-2 sm:top-0 sm:right-0 text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-full shadow-lg z-10"
           >
             <X size={24} className="sm:w-6 sm:h-6" />
           </button>
           
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-2 shrink-0 justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-indigo-500 p-3 rounded-2xl shadow-[0_0_20px_rgba(99,102,241,0.5)] shrink-0">
-                <Settings className="text-white w-6 h-6 sm:w-8 sm:h-8" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-500 p-2 sm:p-3 rounded-2xl shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
+                <Settings className="text-white w-5 h-5 sm:w-8 sm:h-8" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-4xl font-black text-white tracking-tight truncate">Game Control Center</h2>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <p className="text-indigo-300 font-medium text-xs sm:text-base">Supervise remotely</p>
-                  <span className="text-slate-600">•</span>
-                  <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                    {user ? (
-                      <>
-                        <CheckCircle2 size={12} />
-                        Connected
-                      </>
-                    ) : (
-                      <>
-                        <XCircle size={12} />
-                        Offline
-                      </>
-                    )}
+                <h2 className="text-lg sm:text-3xl font-black text-white tracking-tight truncate leading-tight">Game Control Center</h2>
+                <div className="flex items-center gap-2">
+                  <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                    {user ? "Cloud Connected" : "Cloud Offline"}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {isAdminState && (
-                 <>
-                   <button
-                     onClick={() => setShowHistory(!showHistory)}
-                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 sm:px-4 py-2 rounded-xl transition-colors font-bold text-xs sm:text-sm"
-                   >
-                     <Clock size={16} />
-                     <span className="hidden xs:inline">{showHistory ? "Dashboard" : "History"}</span>
-                     <span className="xs:hidden">{showHistory ? "Dash" : "Hist"}</span>
-                   </button>
-                   <button
-                     onClick={adminLogout}
-                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 sm:px-4 py-2 rounded-xl transition-colors font-bold text-xs sm:text-sm border border-red-500/20"
-                   >
-                     <LogOut size={16} />
-                     Exit
-                   </button>
-                 </>
+                <>
+                  <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="p-1.5 sm:px-4 sm:py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors font-bold text-[10px] sm:text-xs"
+                    title={showHistory ? "View Live Dashboard" : "View Game History"}
+                  >
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <Clock size={14} className="sm:size-[16px]" />
+                      <span className="hidden sm:inline">{showHistory ? "Dashboard" : "History"}</span>
+                      {!showHistory && <span className="sm:hidden">Hist</span>}
+                      {showHistory && <span className="sm:hidden">Dash</span>}
+                    </div>
+                  </button>
+                  <button
+                    onClick={adminLogout}
+                    className="p-1.5 sm:px-4 sm:py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-colors font-bold text-[10px] sm:text-xs border border-red-500/20"
+                    title="Exit and Sign Out"
+                  >
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <LogOut size={14} className="sm:size-[16px]" />
+                      <span className="hidden sm:inline">Exit Cloud</span>
+                      <span className="sm:hidden">Exit</span>
+                    </div>
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -2212,12 +2214,13 @@ export default function App() {
                     </button>
                   </div>
                   
-                  <div className="mt-4 pt-4 border-t border-slate-700">
+                  <div className="mt-6 pt-6 border-t border-slate-700/50">
+                    <p className="text-[10px] text-slate-500 mb-3 font-bold uppercase tracking-wider text-center">Emergency Controls</p>
                     <button
                       onClick={endAllGames}
-                      className="w-full bg-red-600/90 hover:bg-red-500 text-white font-black py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_20px_rgba(239,68,68,0.6)] uppercase tracking-[0.1em] flex items-center justify-center gap-2"
+                      className="w-full bg-red-600/90 hover:bg-red-600 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:shadow-red-500/20 uppercase tracking-[0.2em] flex items-center justify-center gap-2 group"
                     >
-                      <XCircle size={18} />
+                      <XCircle size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                       Force End All Games
                     </button>
                   </div>
@@ -2335,9 +2338,8 @@ export default function App() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-6 flex-1">
-                      
-                      {/* Connection Stats */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {/* Connection Stats */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                          <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50 flex flex-col relative group">
                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Room Code</span>
                            <div className="flex items-center gap-2">
@@ -2375,6 +2377,42 @@ export default function App() {
                            <span className="text-lg font-black text-amber-400">
                              {timeLeft !== null ? `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, "0")}` : "∞"}
                            </span>
+                         </div>
+                         <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50 flex flex-col">
+                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Controls</span>
+                           <div className="flex gap-2">
+                             {gameState === "playing" ? (
+                               <button 
+                                 onClick={async () => {
+                                   if (gameId && window.confirm("Finish this game?")) {
+                                      await updateDoc(doc(db, "games", gameId), { gameState: "finished" });
+                                   }
+                                 }}
+                                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg py-1 text-[10px] font-black uppercase tracking-wider"
+                               >
+                                 Finish
+                               </button>
+                             ) : (
+                               <button 
+                                 onClick={startMultiplayerGame}
+                                 className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg py-1 text-[10px] font-black uppercase tracking-wider"
+                               >
+                                 Start
+                               </button>
+                             )}
+                             <button 
+                               onClick={async () => {
+                                 if (gameId && window.confirm("Delete this room?")) {
+                                    await deleteDoc(doc(db, "games", gameId));
+                                    setGameId(null);
+                                 }
+                               }}
+                               className="bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg px-2 py-1 flex items-center justify-center shrink-0"
+                               title="Delete Room"
+                             >
+                               <X size={14} />
+                             </button>
+                           </div>
                          </div>
                       </div>
 
