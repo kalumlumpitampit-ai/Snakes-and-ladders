@@ -1795,30 +1795,30 @@ export default function App() {
     return (
       <div className="h-[100dvh] w-full bg-slate-900 flex flex-col p-4 sm:p-6 lg:p-8 font-sans border-t-[6px] sm:border-t-8 border-indigo-500 overflow-y-auto overflow-x-hidden">
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-6 relative h-full min-h-0">
-          <button
-            onClick={closeTeacherPanel}
-            className="absolute top-2 right-2 sm:top-0 sm:right-0 text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-full shadow-lg z-10"
-          >
-            <X size={24} className="sm:w-6 sm:h-6" />
-          </button>
-          
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-indigo-500 p-2 sm:p-3 rounded-2xl shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
-                <Settings className="text-white w-5 h-5 sm:w-8 sm:h-8" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-3xl font-black text-white tracking-tight truncate leading-tight">Game Control Center</h2>
-                <div className="flex items-center gap-2">
-                  <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                    {user ? "Cloud Connected" : "Cloud Offline"}
+          {isAdminState && (
+            <>
+              <button
+                onClick={closeTeacherPanel}
+                className="absolute top-2 right-2 sm:top-0 sm:right-0 text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-full shadow-lg z-10"
+              >
+                <X size={24} className="sm:w-6 sm:h-6" />
+              </button>
+              
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-indigo-500 p-2 sm:p-3 rounded-2xl shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
+                    <Settings className="text-white w-5 h-5 sm:w-8 sm:h-8" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-3xl font-black text-white tracking-tight truncate leading-tight">Game Control Center</h2>
+                    <div className="flex items-center gap-2">
+                      <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                        {user ? "Cloud Connected" : "Cloud Offline"}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 pr-10 sm:pr-0">
-              {isAdminState && (
-                <>
+                <div className="flex items-center gap-1.5 sm:gap-2 pr-10 sm:pr-0">
                   <button
                     onClick={() => setShowHistory(!showHistory)}
                     className="p-1.5 sm:px-4 sm:py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors font-bold text-[10px] sm:text-xs"
@@ -1842,10 +1842,10 @@ export default function App() {
                       <span className="sm:hidden">Exit</span>
                     </div>
                   </button>
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {!isAdminState ? (
             <div className="bg-slate-800 rounded-3xl p-6 sm:p-10 flex flex-col items-center justify-center border border-slate-700 shadow-2xl mt-10 max-w-md mx-auto w-full shrink-0">
@@ -2718,15 +2718,17 @@ export default function App() {
                   )}
                 </div>
 
-              <button
-                onClick={() => {
-                  audio.init();
-                  setLocation("/admin");
-                }}
-                className="w-full mt-8 bg-black/5 hover:bg-black/10 text-indigo-900/60 hover:text-indigo-900 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
-              >
-                <Settings size={14} /> Admin Dashboard
-              </button>
+                      {isAdminState && (
+                        <button
+                          onClick={() => {
+                            audio.init();
+                            setLocation("/admin");
+                          }}
+                          className="w-full mt-8 bg-black/5 hover:bg-black/10 text-indigo-900/60 hover:text-indigo-900 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                        >
+                          <Settings size={14} /> Admin Dashboard
+                        </button>
+                      )}
             </div>
           </motion.div>
         )}
