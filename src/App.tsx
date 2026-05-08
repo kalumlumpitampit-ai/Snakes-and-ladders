@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, getDocs, setDoc, onSnapshot, updateDoc, collection, deleteDoc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { doc, getDoc, getDocs, setDoc, onSnapshot, updateDoc, collection, deleteDoc, serverTimestamp, writeBatch, query, where } from "firebase/firestore";
 import {
   Settings,
   X,
@@ -556,22 +556,20 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!isAdminState) return;
+    if (!isAdminState || !user) return;
     
     let unsubGames: any;
     
     // Automatically load the latest game session for the admin to supervise
-    const q = collection(db, "games");
+    const q = query(collection(db, "games"), where("hostId", "==", user.uid));
     unsubGames = onSnapshot(q, (snapshot) => {
       let activeGameId: string | null = null;
       let playingGameId: string | null = null;
       
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
-        if (user && data.hostId === user.uid) {
-           if (data.gameState === "playing") playingGameId = docSnap.id;
-           if (data.gameState === "setup") activeGameId = docSnap.id;
-        }
+        if (data.gameState === "playing") playingGameId = docSnap.id;
+        if (data.gameState === "setup") activeGameId = docSnap.id;
       });
       
       // Prefer playing game over setup game
@@ -808,9 +806,9 @@ export default function App() {
       const ds = await getDoc(docRef);
       if (ds.exists()) {
         const gameData = ds.data();
-        const lobbyData = gameData.lobby || {};
+        const serverLobby = gameData.lobby || {};
         
-        if (Object.keys(lobbyData).length >= 5 && !lobbyData[localPlayerId]) {
+        if (Object.keys(serverLobby).length >= 5 && !serverLobby[localPlayerId]) {
            showMessage("Room Full", "This game already has the maximum of 5 teams.");
            return;
         }
@@ -818,11 +816,11 @@ export default function App() {
         setGameId(code);
         setIsHost(gameData.hostId === user?.uid);
         
-        // Add to lobby if not already there or not host
-        if (!lobbyData[localPlayerId]) {
+        // Add to lobby if not already there
+        if (!serverLobby[localPlayerId]) {
            await updateDoc(docRef, {
              [`lobby.${localPlayerId}`]: {
-                name: "Player",
+                name: "",
                 colorIndex: null
              }
            });
@@ -1024,13 +1022,14 @@ export default function App() {
   const [gameHistory, setGameHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    if (showHistory && isAdminState) {
-      getDocs(collection(db, "game_history")).then(snap => {
+    if (showHistory && isAdminState && user) {
+      const q = query(collection(db, "game_history"), where("hostId", "==", user.uid));
+      getDocs(q).then(snap => {
         const h = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => b.completedAt - a.completedAt);
         setGameHistory(h);
       }).catch(e => console.error(e));
     }
-  }, [showHistory, isAdminState]);
+  }, [showHistory, isAdminState, user]);
   const [msgModal, setMsgModal] = useState({
     open: false,
     title: "",
@@ -1401,40 +1400,27 @@ export default function App() {
       return;
     }
 
+    if (!gameId) {
+      alert("No active session selected to end. Please select a game session from history or enter a room code first.");
+      return;
+    }
+
     if (
       window.confirm(
-        "Are you sure you want to stop and end ALL active games for all players? This action is irreversible."
+        `CRITICAL: Are you sure you want to FORCE END room ${gameId}? This will stop the game for all players in this session. This action cannot be undone.`
       )
     ) {
       try {
-        console.log("Admin attempting to end all games...");
-        const querySnapshot = await getDocs(collection(db, "games"));
+        console.log(`Admin attempting to end game session: ${gameId}`);
+        const docRef = doc(db, "games", gameId);
+        await deleteDoc(docRef);
         
-        if (querySnapshot.empty) {
-          alert("No active games found to end.");
-          return;
-        }
-
-        const docs = querySnapshot.docs;
-        const total = docs.length;
-        
-        // Firestore batches have a limit of 500 operations
-        for (let i = 0; i < docs.length; i += 500) {
-          const batch = writeBatch(db);
-          const chunk = docs.slice(i, i + 500);
-          chunk.forEach((docSnap) => {
-            batch.delete(docSnap.ref);
-          });
-          await batch.commit();
-        }
-        
-        console.log(`Successfully ended ${total} games.`);
-        setGameId(null); // Reset admin's local game tracking
-        alert(`Successfully ended all ${total} active games.`);
+        setGameId(null);
+        alert(`Successfully ended and cleared session ${gameId}.`);
       } catch (e) {
         console.error("Force End Error:", e);
-        handleFirestoreError(e, OperationType.DELETE, "games");
-        alert("An error occurred while ending games. Check the console for details.");
+        handleFirestoreError(e, OperationType.DELETE, `games/${gameId}`);
+        alert("An error occurred while ending the game. Check the console for details.");
       }
     }
   };
@@ -1644,6 +1630,7 @@ export default function App() {
     if (isHost || !gameId) {
       const durationMinutes = Math.round((Date.now() - (startedAtRef.current || Date.now())) / 60000);
       const historyEntry = {
+        hostId: user?.uid,
         winner: player.name || `Team ${player.id + 1}`,
         winnerColor: player.color.hex,
         durationMinutes: durationMinutes,
@@ -1829,7 +1816,7 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 pr-10 sm:pr-0">
               {isAdminState && (
                 <>
                   <button
@@ -2221,7 +2208,7 @@ export default function App() {
                       className="w-full bg-red-600/90 hover:bg-red-600 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:shadow-red-500/20 uppercase tracking-[0.2em] flex items-center justify-center gap-2 group"
                     >
                       <XCircle size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-                      Force End All Games
+                      {gameId ? `Force End ${gameId}` : "Force End Room"}
                     </button>
                   </div>
                 </div>
@@ -2424,8 +2411,8 @@ export default function App() {
                              <div className="flex gap-2 flex-wrap mb-4">
                                {Object.values(lobbyData).map((p: any, idx) => (
                                   <div key={idx} className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-600 shadow-sm">
-                                     <div className="w-3 h-3 rounded-full shadow-inner" style={{backgroundColor: p.colorIndex !== null ? Object.values(colors)[p.colorIndex].hex : '#cbd5e1'}}></div>
-                                     <span className="text-xs font-bold text-slate-200">{p.name}</span>
+                                     <div className="w-3 h-3 rounded-full shadow-inner" style={{backgroundColor: p.colorIndex !== null ? colors[p.colorIndex].hex : '#cbd5e1'}}></div>
+                                     <span className="text-xs font-bold text-slate-200">{p.name || `P${idx+1}`}</span>
                                   </div>
                                ))}
                              </div>
@@ -2543,50 +2530,74 @@ export default function App() {
             </button>
 
             <motion.div 
-              initial={{ y: -20, opacity: 0 }}
+              initial={{ y: -30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               className="relative z-10 text-center mb-10 flex flex-col items-center w-full"
             >
-              {/* Title Text */}
-              <div className="relative z-10 flex items-center justify-center text-5xl md:text-7xl font-black uppercase tracking-tighter text-green-700 drop-shadow-md pb-2 px-8">
-                <motion.span 
-                  className="text-red-500 mr-3 inline-block drop-shadow-md origin-bottom"
-                  animate={{ 
-                    rotate: [0, -10, 10, -10, 5, 0],
-                    scale: [1, 1.1, 1] 
-                  }}
-                  transition={{ repeat: Infinity, repeatDelay: 5, duration: 1.2, ease: "easeInOut" }}
-                >🐍</motion.span>
-                <div className="relative group">
+              {/* Floating Bubbles */}
+              <div className="absolute inset-0 -z-10 pointer-events-none">
+                {[...Array(6)].map((_, i) => (
                   <motion.div
-                    initial={{ scale: 0.95 }}
+                    key={i}
+                    animate={{
+                      y: [0, -100, 0],
+                      x: [0, Math.sin(i) * 30, 0],
+                      opacity: [0.2, 0.5, 0.2],
+                    }}
+                    transition={{
+                      duration: 5 + i,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="absolute w-24 h-24 rounded-full bg-white/20 blur-xl"
+                    style={{
+                      left: `${15 + i * 15}%`,
+                      top: `${20 + (i % 3) * 20}%`,
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Title Text */}
+              <div className="relative z-10 flex items-center justify-center text-5xl md:text-8xl font-black uppercase tracking-tighter text-green-800 drop-shadow-lg pb-4 px-8">
+                <motion.span 
+                  className="text-red-500 mr-4 inline-block drop-shadow-xl origin-bottom"
+                  animate={{ 
+                    rotate: [-5, 5, -5],
+                    scale: [1, 1.05, 1] 
+                  }}
+                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                >🐍</motion.span>
+                <div className="relative">
+                  <motion.div
+                    initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                    className="bg-clip-text text-transparent bg-gradient-to-br from-green-600 to-green-800 tracking-tighter drop-shadow-sm pb-1 relative z-10"
+                    transition={{ duration: 0.8 }}
+                    className="bg-clip-text text-transparent bg-gradient-to-br from-green-600 via-green-800 to-emerald-900 tracking-tighter drop-shadow-md pb-2 relative z-10"
                   >
                     Snakes & Ladders
                   </motion.div>
                 </div>
                 <motion.span 
-                  className="text-yellow-600 ml-3 inline-block drop-shadow-md"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ repeat: Infinity, repeatDelay: 4, duration: 1, ease: "easeInOut" }}
+                  className="text-yellow-600 ml-4 inline-block drop-shadow-xl"
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
                 >🪜</motion.span>
               </div>
-              <motion.h2 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.8 }}
-                className="text-2xl md:text-3xl font-black uppercase tracking-widest text-blue-700 mt-2"
+              <motion.div 
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5, type: "spring" }}
+                className="bg-blue-600 text-white px-6 py-2 rounded-full font-black uppercase tracking-[0.3em] text-sm md:text-xl shadow-xl border-4 border-white/50 -mt-2 rotate-1"
               >
                 Tree of Knowledge
-              </motion.h2>
+              </motion.div>
             </motion.div>
 
-            <div className="glass-panel p-6 md:p-10 rounded-[2rem] w-full max-w-md relative z-10 flex flex-col items-center bg-white/40 backdrop-blur-3xl border border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.15)] mt-4">
-                <div className="w-full flex flex-col gap-4 relative pt-2">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-700 text-center mb-1 drop-shadow-sm">Online Multiplayer</p>
+            <div className="glass-panel p-8 md:p-12 rounded-[3rem] w-full max-w-md relative z-10 flex flex-col items-center bg-white/60 backdrop-blur-2xl border border-white/80 shadow-[0_30px_60px_rgba(0,0,0,0.12)] mt-6 ring-1 ring-black/5">
+                <div className="w-full flex flex-col gap-5 relative pt-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 text-center mb-1 drop-shadow-sm opacity-80 underline underline-offset-8">Cloud Multiplayer Hub</p>
                   
                   {gameId ? (
                     <div className="text-center bg-indigo-50 p-4 rounded-2xl border border-indigo-200 shadow-inner relative">
