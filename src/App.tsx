@@ -2652,30 +2652,30 @@ export default function App() {
               />
             </div>
             
-            <div className="relative z-10 w-full max-w-7xl px-2 md:px-4 flex flex-col items-center">
+            <div className="relative z-10 w-full max-w-7xl px-6 md:px-10 lg:px-16 flex flex-col items-center py-8 md:py-12">
               <motion.div 
                 initial={{ y: -30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center mb-4 md:mb-10 w-full"
+                className="text-center mb-6 md:mb-14 w-full"
               >
                 <div className="flex flex-col items-center">
                   <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.8 }}
-                    className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-8 px-4"
+                    className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 mb-10 px-4"
                   >
-                    <div className="flex items-center gap-4 md:gap-8">
+                    <div className="flex items-center gap-4 md:gap-12">
                       <motion.span 
                         animate={{ rotate: [-10, 10, -10], y: [0, -10, 0] }}
                         transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                        className="text-6xl md:text-8xl drop-shadow-xl select-none"
+                        className="text-5xl md:text-8xl drop-shadow-xl select-none"
                       >🐍</motion.span>
                       
-                      <h1 className="text-5xl sm:text-6xl md:text-9xl font-black uppercase tracking-tighter leading-[0.8] md:leading-[0.85] flex flex-col items-center md:items-start">
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm px-4 py-2">Snakes</span>
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4 px-4 py-2">& Ladders</span>
+                      <h1 className="text-4xl sm:text-5xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.8] md:leading-[0.85] flex flex-col items-center md:items-start">
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm px-4 py-1">Snakes</span>
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4 px-4 py-1">& Ladders</span>
                       </h1>
 
                       <motion.span 
