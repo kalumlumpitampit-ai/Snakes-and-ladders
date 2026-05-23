@@ -24,23 +24,42 @@ body {
   width: 100%;
   height: 100%;
   background-color: #fff;
-  border: 10px solid #000;
+  border: 4px solid #000;
   position: relative;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
 }
 
+@media (min-width: 640px) {
+  #game-board {
+    border-width: 8px;
+  }
+}
+
+@media (min-width: 768px) {
+  #game-board {
+    border-width: 10px;
+  }
+}
+
 .board-tile {
-  border: 2px solid #000;
+  border: 1px solid #000;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: 4px;
+  padding: 2px;
   position: relative;
   z-index: 10;
 }
 
+@media (min-width: 640px) {
+  .board-tile {
+    border-width: 2px;
+    padding: 4px;
+  }
+}
+
 .board-tile span {
-  font-size: clamp(0.7rem, 2vmin, 1.4rem);
+  font-size: clamp(0.75rem, 4.2vw, 1.4rem);
   font-weight: 900;
   color: #000;
   line-height: 1;
@@ -50,23 +69,36 @@ body {
 
 .player-token {
   position: absolute;
-  width: 4%;
-  height: 4%;
-  max-width: 20px;
-  max-height: 20px;
+  width: 6.5%;
+  height: 6.5%;
+  max-width: 28px;
+  max-height: 28px;
+  min-width: 15px;
+  min-height: 15px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: clamp(0.6rem, 1.5vmin, 1rem);
+  font-size: clamp(0.65rem, 3.2vw, 0.95rem);
   color: white;
   z-index: 50;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.4),
     inset 0 -2px 5px rgba(0, 0, 0, 0.2);
-  border: 3px solid rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+@media (min-width: 640px) {
+  .player-token {
+    width: 5%;
+    height: 5%;
+    max-width: 32px;
+    max-height: 32px;
+    font-size: clamp(0.7rem, 1.8vmin, 1.1rem);
+    border-width: 3px;
+  }
 }
 
 .pulse-ring {

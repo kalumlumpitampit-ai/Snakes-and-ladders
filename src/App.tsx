@@ -2523,7 +2523,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full relative flex flex-col items-center justify-start xl:justify-center pt-8 xl:pt-0 p-4 pb-12 box-border font-sans overflow-x-hidden">
+    <div className="min-h-[100dvh] w-full relative flex flex-col items-center justify-start xl:justify-center pt-2 sm:pt-8 xl:pt-0 p-1.5 xs:p-2 sm:p-4 pb-12 box-border font-sans overflow-x-hidden">
       <AnimatePresence>
         {gameState === "setup" && (
           <motion.div
@@ -2796,7 +2796,7 @@ export default function App() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex w-full flex-col lg:flex-row pb-12 lg:pb-0 gap-6 lg:gap-8 items-center justify-center mx-auto z-10 relative"
+          className="flex w-full flex-col lg:flex-row pb-6 lg:pb-0 gap-4 sm:gap-6 lg:gap-8 items-center justify-center mx-auto z-10 relative"
         >
           <AnimatePresence>
             {showTurnPopup && players[currentTurn] && (
@@ -2825,8 +2825,8 @@ export default function App() {
             )}
           </AnimatePresence>
           {/* Main Board Area */}
-          <div className="flex flex-col items-center w-full max-w-[90vw] sm:max-w-[500px] lg:max-w-[80vh] shrink-0">
-            <div className="relative w-full mb-10 sm:mb-12 flex gap-2 justify-between items-center bg-white/50 backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-md font-black uppercase tracking-widest text-indigo-900 border border-white/50 text-[10px] sm:text-sm">
+          <div className="flex flex-col items-center w-full max-w-[98vw] sm:max-w-[540px] md:max-w-[600px] lg:max-w-[80vh] shrink-0">
+            <div className="relative w-full mb-4 sm:mb-8 md:mb-12 flex gap-2 justify-between items-center bg-white/50 backdrop-blur-md px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-md font-black uppercase tracking-widest text-indigo-900 border border-white/50 text-[10px] sm:text-sm">
               <div>
                 Timer:{" "}
                 {timeLeft !== null
@@ -3077,7 +3077,7 @@ export default function App() {
           </div>
 
           {/* Dashboard sidebar */}
-          <div className="flex flex-col gap-3 w-full max-w-[90vw] sm:max-w-[500px] lg:w-[240px] xl:w-[280px] shrink-0 justify-center z-40 pb-6 lg:pb-0">
+          <div className="flex flex-col gap-3 w-full max-w-[98vw] sm:max-w-[540px] lg:w-[240px] xl:w-[280px] shrink-0 justify-center z-40 pb-6 lg:pb-0">
             {/* CURRENT TURN CARD */}
             <div className="bg-white rounded-3xl p-4 sm:p-5 lg:p-6 flex flex-col items-center shadow-xl w-full transform transition-all order-1 lg:order-none">
               <h2 className="text-xs lg:text-[10px] font-black text-gray-800 uppercase tracking-widest mb-3 lg:mb-2 text-center opacity-70">
