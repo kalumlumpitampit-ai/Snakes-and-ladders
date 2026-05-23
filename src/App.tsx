@@ -214,13 +214,44 @@ class AudioService {
     if (this.ctx.state === "suspended") this.ctx.resume();
   }
   play(type: string) {
+    this.init();
     if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    if (type === "win") {
+      // Magnificent, rich multi-part victory fanfare using overlapping harmonics
+      // Notes: C4, E4, G4, C5, E5, G5, C6 to build a massive, triumphant major chord cascade
+      const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.connect(g);
+        g.connect(this.ctx.destination);
+
+        // Mix waves for rich harmonics: triangles for warm lower notes, sines for bright upper notes
+        o.type = idx % 2 === 0 ? "triangle" : "sine";
+        o.frequency.setValueAtTime(freq, now + idx * 0.12);
+
+        const startDelay = idx * 0.12;
+        const duration = 1.3 - (idx * 0.08); // Higher notes end crisp, lower notes ring out
+
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(0.12, now + startDelay + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, now + startDelay + duration);
+
+        o.start(now + startDelay);
+        o.stop(now + startDelay + duration);
+      });
+      return;
+    }
+
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    const now = this.ctx.currentTime;
-    if (type === "roll") {
+
+    if (type === "roll" || type === "dice") {
       osc.type = "sine";
       osc.frequency.setValueAtTime(300, now);
       osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
@@ -274,15 +305,6 @@ class AudioService {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
       osc.start(now);
       osc.stop(now + 0.05);
-    } else if (type === "win") {
-      osc.type = "triangle";
-      [440, 554.37, 659.25, 880].forEach((freq, i) => {
-        osc.frequency.setValueAtTime(freq, now + i * 0.2);
-      });
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.linearRampToValueAtTime(0, now + 1);
-      osc.start(now);
-      osc.stop(now + 1);
     }
   }
 }
@@ -2556,24 +2578,24 @@ export default function App() {
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.8 }}
-                    className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 mb-10 px-4"
+                    className="w-full max-w-5xl px-4 mb-4 md:mb-10"
                   >
-                    <div className="flex items-center gap-4 md:gap-12">
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 lg:gap-12">
                       <motion.span 
                         animate={{ rotate: [-10, 10, -10], y: [0, -10, 0] }}
                         transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                        className="text-5xl md:text-8xl drop-shadow-xl select-none"
+                        className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl drop-shadow-xl select-none"
                       >🐍</motion.span>
                       
-                      <h1 className="text-4xl sm:text-5xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.8] md:leading-[0.85] flex flex-col items-center md:items-start">
+                      <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.85] flex flex-col items-center text-center">
                         <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm px-4 py-1">Snakes</span>
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-4 px-4 py-1">& Ladders</span>
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-2 lg:-mt-4 px-4 py-1">& Ladders</span>
                       </h1>
 
                       <motion.span 
                         animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
                         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 0.5 }}
-                        className="text-6xl md:text-8xl drop-shadow-xl select-none"
+                        className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl drop-shadow-xl select-none"
                       >🪜</motion.span>
                     </div>
                   </motion.div>
@@ -2589,19 +2611,19 @@ export default function App() {
                 </div>
               </motion.div>
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 w-full max-w-6xl">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 w-full max-w-6xl px-2 sm:px-4">
                 {/* Main Action Card */}
                 <motion.div 
                   initial={{ x: -30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="md:col-span-7"
+                  className="col-span-1 lg:col-span-7"
                 >
                   <div className="bg-white/70 backdrop-blur-3xl p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] h-full flex flex-col">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Active Room</span>
-                        <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Multiplayer</h2>
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 uppercase tracking-tight">Multiplayer</h2>
                       </div>
                       <button 
                         onClick={() => setShowInstructions(true)}
@@ -2702,7 +2724,7 @@ export default function App() {
                   initial={{ x: 30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="md:col-span-5 flex flex-col gap-6"
+                  className="col-span-1 lg:col-span-5 flex flex-col gap-6"
                 >
                   {/* Practice Card */}
                   <div className="bg-white/60 backdrop-blur-xl p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/50 shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex-1 flex flex-col">
@@ -3055,7 +3077,7 @@ export default function App() {
           </div>
 
           {/* Dashboard sidebar */}
-          <div className="flex flex-col lg:gap-3 gap-2 w-full lg:w-[200px] shrink-0 justify-center z-40 pb-6 lg:pb-0">
+          <div className="flex flex-col gap-3 w-full max-w-[90vw] sm:max-w-[500px] lg:w-[240px] xl:w-[280px] shrink-0 justify-center z-40 pb-6 lg:pb-0">
             {/* CURRENT TURN CARD */}
             <div className="bg-white rounded-3xl p-4 sm:p-5 lg:p-6 flex flex-col items-center shadow-xl w-full transform transition-all order-1 lg:order-none">
               <h2 className="text-xs lg:text-[10px] font-black text-gray-800 uppercase tracking-widest mb-3 lg:mb-2 text-center opacity-70">
