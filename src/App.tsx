@@ -26,6 +26,7 @@ import {
   UserCheck,
   Share2,
   Users,
+  Plus,
 } from "lucide-react";
 import { Route, Switch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
@@ -322,6 +323,7 @@ const diceConfig: Record<number, number[]> = {
 export default function App() {
   const [location, setLocation] = useLocation();
   const [gameState, setGameState] = useState<"setup" | "playing" | "finished">("setup");
+  const [setupTab, setSetupTab] = useState<"multiplayer" | "solo">("multiplayer");
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentTurn, setCurrentTurn] = useState<number>(0);
   const [isMoving, setIsMoving] = useState<boolean>(false);
@@ -2530,13 +2532,14 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-start md:justify-center overflow-y-auto overflow-x-hidden bg-gradient-to-br from-green-200 to-blue-200 py-8 md:py-10"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-between overflow-y-auto overflow-x-hidden bg-gradient-to-br from-green-200 to-blue-200 p-0 sm:p-4 md:p-6"
           >
 
             <motion.div 
               initial={{ y: -30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full flex-1 flex flex-col items-center justify-between sm:justify-start min-h-full"
             >
 
 
@@ -2565,37 +2568,36 @@ export default function App() {
                 className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-yellow-400/20 to-red-500/20 blur-[100px]"
               />
             </div>
-            
-            <div className="relative z-10 w-full max-w-7xl px-6 md:px-10 lg:px-16 flex flex-col items-center py-8 md:py-12">
+            <div className="relative z-10 w-full max-w-7xl px-0 sm:px-8 md:px-10 lg:px-16 flex flex-col flex-1 items-center pt-8 xs:pt-12 sm:pt-8 md:pt-12 pb-0 sm:pb-4 w-full h-full justify-between">
               <motion.div 
                 initial={{ y: -30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center mb-6 md:mb-14 w-full"
+                className="text-center mt-2 xs:mt-4 pb-3 sm:pb-4 mb-3 xs:mb-5 sm:mb-6 md:mb-14 w-full shrink-0"
               >
                 <div className="flex flex-col items-center">
                   <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.8 }}
-                    className="w-full max-w-5xl px-4 mb-4 md:mb-10"
+                    className="w-full max-w-5xl px-3 mb-2 xs:mb-3 md:mb-10"
                   >
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 lg:gap-12">
+                    <div className="flex flex-row items-center justify-center gap-3 xs:gap-6 md:gap-8 lg:gap-12">
                       <motion.span 
-                        animate={{ rotate: [-10, 10, -10], y: [0, -10, 0] }}
+                        animate={{ rotate: [-8, 8, -8], y: [0, -6, 0] }}
                         transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                        className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl drop-shadow-xl select-none"
+                        className="text-5xl xs:text-6xl sm:text-7xl md:text-8xl drop-shadow-lg select-none filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.15)]"
                       >🐍</motion.span>
                       
-                      <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.85] flex flex-col items-center text-center">
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 to-green-900 drop-shadow-sm px-4 py-1">Snakes</span>
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 to-blue-900 md:-mt-2 lg:-mt-4 px-4 py-1">& Ladders</span>
+                      <h1 className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-none flex flex-row sm:flex-col items-center justify-center text-center gap-1 sm:gap-0">
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-green-600 via-green-800 to-green-950 drop-shadow-sm px-1.5 py-0.5">Snakes</span>
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-b from-emerald-700 via-teal-800 to-indigo-950 px-1.5 -mt-0.5 sm:-mt-2 lg:-mt-4 py-0.5">& Ladders</span>
                       </h1>
 
                       <motion.span 
-                        animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+                        animate={{ y: [0, -10, 0], rotate: [0, 4, 0] }}
                         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 0.5 }}
-                        className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl drop-shadow-xl select-none"
+                        className="text-5xl xs:text-6xl sm:text-7xl md:text-8xl drop-shadow-lg select-none filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.15)]"
                       >🪜</motion.span>
                     </div>
                   </motion.div>
@@ -2604,61 +2606,81 @@ export default function App() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
-                    className="inline-block bg-blue-600 text-white px-6 py-1.5 rounded-full font-black uppercase tracking-[0.3em] text-[10px] md:text-sm shadow-xl border-2 border-white/40 rotate-1 mb-4 md:mb-8"
+                    className="inline-block bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-3 rounded-full font-black uppercase tracking-[0.35em] text-[11px] xs:text-xs md:text-sm shadow-xl border-2 border-white/50 rotate-1 mb-2 xs:mb-4 md:mb-8 hover:scale-105 duration-300 transition-all cursor-pointer hover:rotate-2 select-none"
                   >
                     Tree of Knowledge
                   </motion.div>
                 </div>
               </motion.div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 w-full max-w-6xl px-2 sm:px-4">
+              {/* Premium Segmented Segmented Control Switcher for Mobile */}
+              <div className="flex lg:hidden w-[calc(100%-32px)] mx-4 max-w-sm bg-white/70 backdrop-blur-xl p-1.5 rounded-2xl border border-white/80 shadow-xl mb-6 shrink-0 relative">
+                <button
+                  onClick={() => setSetupTab("multiplayer")}
+                  className={`flex-1 py-4 text-xs xs:text-sm font-black uppercase tracking-widest rounded-xl transition-all duration-300 relative z-10 ${
+                    setupTab === "multiplayer" ? "bg-slate-900 text-white shadow-lg scale-[1.03]" : "text-indigo-950 hover:bg-white/20"
+                  }`}
+                >
+                  Multiplayer
+                </button>
+                <button
+                  onClick={() => setSetupTab("solo")}
+                  className={`flex-1 py-4 text-xs xs:text-sm font-black uppercase tracking-widest rounded-xl transition-all duration-300 relative z-10 ${
+                    setupTab === "solo" ? "bg-slate-900 text-white shadow-lg scale-[1.03]" : "text-indigo-950 hover:bg-white/20"
+                  }`}
+                >
+                  Solo Mode
+                </button>
+              </div>
+ 
+              <div className="w-full flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-0 sm:gap-6 lg:gap-8 max-w-6xl px-0 sm:px-4 pb-0 sm:pb-4">
                 {/* Main Action Card */}
                 <motion.div 
                   initial={{ x: -30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="col-span-1 lg:col-span-7"
+                  className={`col-span-1 lg:col-span-7 ${setupTab === "multiplayer" ? "flex flex-col flex-1" : "hidden lg:flex lg:flex-col lg:flex-1"}`}
                 >
-                  <div className="bg-white/70 backdrop-blur-3xl p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] h-full flex flex-col">
-                    <div className="flex items-center justify-between mb-6">
+                  <div className="bg-white/85 sm:bg-white/70 backdrop-blur-3xl p-6 xs:p-8 sm:p-10 rounded-t-[2.5rem] xs:rounded-3xl md:rounded-[2.5rem] border-t border-x xs:border border-white/60 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] flex-grow flex-1 flex flex-col justify-between w-full">
+                    <div className="flex items-center justify-between mb-8 sm:mb-6">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Active Room</span>
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 uppercase tracking-tight">Multiplayer</h2>
+                        <span className="text-xs xs:text-sm font-black text-blue-600 uppercase tracking-widest mb-1">Active Room</span>
+                        <h2 className="text-2xl xs:text-3xl sm:text-2xl md:text-3xl font-black text-slate-800 uppercase tracking-tight">Multiplayer</h2>
                       </div>
                       <button 
                         onClick={() => setShowInstructions(true)}
-                        className="p-3 bg-white/80 hover:bg-white text-slate-600 rounded-2xl transition-all shadow-sm border border-slate-100 hover:scale-105 active:scale-95"
+                        className="p-4 bg-white/80 hover:bg-white text-slate-600 rounded-2xl transition-all shadow-md border border-slate-100 hover:scale-105 active:scale-95 duration-200"
                       >
-                        <HelpCircle size={20} />
+                        <HelpCircle size={24} />
                       </button>
                     </div>
 
-                    <div className="flex-1 flex flex-col justify-center">
+                    <div className="flex-1 flex flex-col justify-center w-full">
                       {gameId ? (
-                        <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 shadow-inner relative text-indigo-900">
+                        <div className="bg-indigo-50/50 p-6 xs:p-8 rounded-3xl border border-indigo-100 shadow-inner relative text-indigo-900 w-full">
                           <button
                             onClick={handleCopyCode}
-                            className="absolute top-4 right-4 p-2 bg-white rounded-xl text-indigo-400 hover:text-indigo-600 shadow-sm border border-indigo-50 transition-all hover:scale-110"
+                            className="absolute top-4 right-4 p-2.5 bg-white rounded-xl text-indigo-400 hover:text-indigo-600 shadow-sm border border-indigo-50 transition-all hover:scale-110"
                           >
-                            {copiedCode ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
+                            {copiedCode ? <Check size={20} className="text-emerald-500" /> : <Copy size={20} />}
                           </button>
                           
                           <div className="text-center">
-                            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.3em] mb-1 block">Room Code</span>
-                            <div className="font-black text-indigo-900 text-3xl mb-4 tracking-widest tabular-nums">{gameId}</div>
+                            <span className="text-xs xs:text-sm text-indigo-400 font-bold uppercase tracking-[0.3em] mb-1 block">Room Code</span>
+                            <div className="font-black text-indigo-900 text-4xl xs:text-5xl mb-6 tracking-widest tabular-nums">{gameId}</div>
                             
-                            <div className="flex flex-col gap-4 max-w-xs mx-auto">
+                            <div className="flex flex-col gap-5 max-w-sm mx-auto">
                               <input
                                 type="text"
                                 value={lobbyData[localPlayerId]?.name || ""}
                                 onChange={(e) => updateLobbyItem({ name: e.target.value })}
                                 placeholder="Enter Team Name..."
-                                className="w-full text-center text-sm font-bold px-4 py-3 bg-white border-2 border-indigo-100 rounded-2xl focus:outline-none focus:border-indigo-400 shadow-sm transition-all"
+                                className="w-full text-center text-base xs:text-lg sm:text-sm md:text-base font-bold px-6 py-4 bg-white border-2 border-indigo-100 rounded-2xl focus:outline-none focus:border-indigo-400 shadow-sm transition-all"
                               />
                               
-                              <div className="bg-white/80 p-4 rounded-2xl border border-indigo-50">
-                                <p className="text-[10px] text-indigo-500 mb-3 font-black uppercase tracking-widest">Choose Your Color</p>
-                                <div className="flex justify-center flex-wrap gap-2">
+                              <div className="bg-white/85 p-5 rounded-2xl border border-indigo-50">
+                                <p className="text-xs xs:text-sm text-indigo-500 mb-4 font-black uppercase tracking-widest">Choose Your Color</p>
+                                <div className="flex justify-center flex-wrap gap-2.5">
                                   {colors.map((c, i) => {
                                     const isSelected = lobbyData[localPlayerId]?.colorIndex === i;
                                     const isTaken = Object.entries(lobbyData).some(([uid, data]: [string, any]) => uid !== localPlayerId && data.colorIndex === i);
@@ -2667,7 +2689,7 @@ export default function App() {
                                         key={i}
                                         disabled={isTaken}
                                         onClick={() => updateLobbyItem({ colorIndex: i })}
-                                        className={`w-9 h-9 rounded-full border-4 transition-all ${isSelected ? "scale-110 shadow-lg border-white ring-4 ring-indigo-200" : "border-white/50"} ${isTaken ? "opacity-20 cursor-not-allowed scale-90" : "hover:scale-110 shadow-sm"}`}
+                                        className={`w-11 h-11 rounded-full border-4 transition-all ${isSelected ? "scale-115 shadow-lg border-white ring-4 ring-indigo-200" : "border-white/50"} ${isTaken ? "opacity-20 cursor-not-allowed scale-90" : "hover:scale-115 shadow-sm"}`}
                                         style={{ backgroundColor: c.hex }}
                                       />
                                     )
@@ -2679,18 +2701,18 @@ export default function App() {
                                 {isHost ? (
                                   <button
                                     onClick={startMultiplayerGame}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:shadow-indigo-200 uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-2xl transition-all shadow-xl hover:shadow-indigo-200 uppercase tracking-widest text-base xs:text-lg flex items-center justify-center gap-2"
                                   >
-                                    Launch Game <Send size={16} />
+                                    Launch Game <Send size={18} />
                                   </button>
                                 ) : (
-                                  <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold py-4">
-                                    <div className="flex gap-1">
-                                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
-                                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                                      <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                  <div className="flex items-center justify-center gap-2 text-indigo-600 font-bold py-5">
+                                    <div className="flex gap-1.5">
+                                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                                      <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                      <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                                     </div>
-                                    <span className="text-xs uppercase tracking-widest">Waiting for host</span>
+                                    <span className="text-sm uppercase tracking-widest">Waiting for host</span>
                                   </div>
                                 )}
                               </div>
@@ -2698,19 +2720,32 @@ export default function App() {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-6">
-                          <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-6 w-full px-1">
+                          <div className="flex flex-col gap-5">
                             <input 
                               value={joinCode} 
                               onChange={(e) => setJoinCode(e.target.value)} 
                               placeholder="ENTER ROOM CODE" 
-                              className="w-full bg-indigo-50/50 border-2 border-indigo-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-indigo-400 transition-all uppercase font-black text-indigo-900 text-center tracking-[0.3em] placeholder:text-indigo-200" 
+                              className="w-full bg-indigo-50/55 border-2 border-indigo-200/60 rounded-2xl px-6 py-5.5 text-lg xs:text-xl font-black focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all uppercase text-indigo-950 text-center tracking-[0.3em] placeholder:text-indigo-300 shadow-inner" 
                             />
                             <button 
                               onClick={joinSession} 
-                              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-2xl transition-all shadow-lg uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                              className="w-full bg-slate-900 hover:bg-black text-white font-black py-5 rounded-2xl transition-all shadow-2xl hover:shadow-indigo-100 uppercase tracking-widest text-base xs:text-lg flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer select-none"
                             >
-                              Join Match <Users size={18} />
+                              Join Match <Users size={20} />
+                            </button>
+
+                            <div className="relative flex py-3 items-center">
+                              <div className="flex-grow border-t border-slate-200"></div>
+                              <span className="flex-shrink mx-4 text-xs font-black uppercase tracking-[0.25em] text-slate-400 select-none">or create room</span>
+                              <div className="flex-grow border-t border-slate-200"></div>
+                            </div>
+
+                            <button 
+                              onClick={createGame} 
+                              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-5 rounded-2xl transition-all shadow-xl hover:shadow-indigo-300/45 uppercase tracking-widest text-base xs:text-lg flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer select-none"
+                            >
+                              Host New Game <Plus size={20} />
                             </button>
                           </div>
                         </div>
@@ -2724,18 +2759,20 @@ export default function App() {
                   initial={{ x: 30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="col-span-1 lg:col-span-5 flex flex-col gap-6"
+                  className={`col-span-1 lg:col-span-5 ${setupTab === "solo" ? "flex flex-col flex-1 gap-4 xs:gap-6 w-full" : "hidden lg:flex lg:flex-col lg:gap-6 lg:flex-1"}`}
                 >
                   {/* Practice Card */}
-                  <div className="bg-white/60 backdrop-blur-xl p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/50 shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex-1 flex flex-col">
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Local Play</span>
-                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-6">Solo Mode</h2>
+                  <div className="bg-white/85 sm:bg-white/60 backdrop-blur-xl p-6 xs:p-8 sm:p-10 rounded-t-[2.5rem] xs:rounded-3xl md:rounded-[2.5rem] border-t border-x xs:border border-white/60 shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex-grow flex-1 flex flex-col justify-between w-full">
+                    <div className="mb-6 sm:mb-4">
+                      <span className="text-xs xs:text-sm font-black text-emerald-600 uppercase tracking-widest mb-1 block">Local Play</span>
+                      <h2 className="text-2xl xs:text-3xl sm:text-2xl md:text-3xl font-black text-slate-800 uppercase tracking-tight mb-4">Solo Mode</h2>
+                    </div>
                     
-                    <div className="flex-1 flex flex-col gap-4">
-                      <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 mb-2">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">CPU Difficulty</span>
-                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[9px] font-black">{localCpuCount} Challengers</span>
+                    <div className="flex-1 flex flex-col gap-6 justify-center w-full">
+                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 mb-2">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-xs xs:text-sm font-black text-emerald-700 uppercase tracking-widest">CPU Difficulty</span>
+                          <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-xs font-black">{localCpuCount} Challengers</span>
                         </div>
                         <input 
                           type="range" 
@@ -2743,23 +2780,23 @@ export default function App() {
                           max="5" 
                           value={localCpuCount}
                           onChange={(e) => setLocalCpuCount(Number(e.target.value))}
-                          className="w-full accent-emerald-600"
+                          className="w-full accent-emerald-600 h-2 cursor-pointer"
                         />
                       </div>
 
                       <button 
                         onClick={() => startGame(0, false, localCpuCount)} 
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:shadow-emerald-100 uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-5 rounded-2xl transition-all shadow-lg hover:shadow-emerald-100 uppercase tracking-widest text-base xs:text-lg flex items-center justify-center gap-2.5 active:scale-98"
                       >
-                        <UserIcon size={16} /> Start Local
+                        <UserIcon size={18} /> Start Local
                       </button>
 
                       {hasSavedGame && (
                         <button 
                           onClick={resumeLocalGame} 
-                          className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-2xl transition-all shadow-lg uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                          className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-5 rounded-2xl transition-all shadow-lg uppercase tracking-widest text-base xs:text-lg flex items-center justify-center gap-2.5 active:scale-98"
                         >
-                          <Clock size={16} /> Resume Game
+                          <Clock size={18} /> Resume Game
                         </button>
                       )}
                     </div>
