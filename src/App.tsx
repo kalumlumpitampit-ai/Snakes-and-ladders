@@ -1808,78 +1808,77 @@ export default function App() {
 
   if (location === "/admin") {
     return (
-      <div className="h-[100dvh] w-full bg-slate-900 flex flex-col p-4 sm:p-6 lg:p-8 font-sans border-t-[6px] sm:border-t-8 border-indigo-500 overflow-y-auto overflow-x-hidden">
-        <div className="w-full max-w-7xl mx-auto flex flex-col gap-6 relative h-full min-h-0">
+      <div className="min-h-[100dvh] h-auto lg:h-[100dvh] w-full bg-slate-900 flex flex-col p-3 sm:p-5 lg:p-8 font-sans border-t-[6px] sm:border-t-8 border-indigo-500 overflow-y-auto lg:overflow-hidden overflow-x-hidden">
+        <div className="w-full max-w-7xl mx-auto flex flex-col gap-4 sm:gap-6 relative min-h-0 lg:h-full">
           {isAdminState && (
             <>
               <button
                 onClick={closeTeacherPanel}
-                className="absolute top-2 right-2 sm:top-0 sm:right-0 text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-full shadow-lg z-10"
+                className="absolute top-1 right-1 sm:top-2 sm:right-2 text-slate-400 hover:text-white transition-colors p-1.5 sm:p-2 bg-slate-800 rounded-full shadow-lg z-30 hover:scale-105 active:scale-95"
+                title="Exit to Main Lobby"
               >
-                <X size={24} className="sm:w-6 sm:h-6" />
+                <X size={20} className="sm:w-6 sm:h-6" />
               </button>
               
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 sm:mb-4 pr-10 sm:pr-0">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <div className="bg-indigo-500 p-2 sm:p-3 rounded-2xl shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
-                    <Settings className="text-white w-5 h-5 sm:w-8 sm:h-8" />
+                    <Settings className="text-white w-5 h-5 sm:w-7 sm:h-7" />
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-lg sm:text-3xl font-black text-white tracking-tight truncate leading-tight">Game Control Center</h2>
-                    <div className="flex items-center gap-2">
-                      <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                    <h2 className="text-base sm:text-2xl lg:text-3xl font-black text-white tracking-tight truncate leading-tight">Game Control Center</h2>
+                    <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
+                      <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] sm:text-xs font-bold uppercase tracking-wider border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                         {user ? "Cloud Connected" : "Cloud Offline"}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 sm:gap-2 pr-10 sm:pr-0">
+                
+                <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 custom-scrollbar scrollbar-none">
                   <button
                     onClick={() => setAdminTab("dashboard")}
-                    className={`p-1.5 sm:px-4 sm:py-2 rounded-xl transition-all font-bold text-[10px] sm:text-xs border flex items-center gap-1 sm:gap-2 ${
+                    className={`p-2 px-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-all font-black text-[9px] sm:text-xs border flex items-center gap-1 sm:gap-2 shrink-0 ${
                       adminTab === "dashboard"
-                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                        : "bg-slate-850 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
                     }`}
                     title="View Live Game controls"
                   >
-                    <Settings size={14} className="sm:size-[16px]" />
-                    <span>Dashboard</span>
+                    <Settings size={12} className="sm:size-[15px]" />
+                    <span>Live</span>
                   </button>
                   <button
                     onClick={() => setAdminTab("history")}
-                    className={`p-1.5 sm:px-4 sm:py-2 rounded-xl transition-all font-bold text-[10px] sm:text-xs border flex items-center gap-1 sm:gap-2 ${
+                    className={`p-2 px-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-all font-black text-[9px] sm:text-xs border flex items-center gap-1 sm:gap-2 shrink-0 ${
                       adminTab === "history"
-                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                        : "bg-slate-850 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
                     }`}
                     title="View Saved Scores & Logs"
                   >
-                    <Clock size={14} className="sm:size-[16px]" />
+                    <Clock size={12} className="sm:size-[15px]" />
                     <span>History</span>
                   </button>
                   <button
                     onClick={() => setAdminTab("docs")}
-                    className={`p-1.5 sm:px-4 sm:py-2 rounded-xl transition-all font-bold text-[10px] sm:text-xs border flex items-center gap-1 sm:gap-2 ${
+                    className={`p-2 px-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-all font-black text-[9px] sm:text-xs border flex items-center gap-1 sm:gap-2 shrink-0 ${
                       adminTab === "docs"
-                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                        : "bg-slate-850 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
                     }`}
                     title="View Game Rules & Docs"
                   >
-                    <BookOpen size={14} className="sm:size-[16px]" />
+                    <BookOpen size={12} className="sm:size-[15px]" />
                     <span>Guide & Docs</span>
                   </button>
                   <button
                     onClick={adminLogout}
-                    className="p-1.5 sm:px-4 sm:py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-colors font-bold text-[10px] sm:text-xs border border-red-500/20"
+                    className="p-2 px-2.5 sm:px-4 sm:py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all font-black text-[9px] sm:text-xs border border-red-500/20 flex items-center gap-1 sm:gap-1.5 shrink-0"
                     title="Exit and Sign Out"
                   >
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <LogOut size={14} className="sm:size-[16px]" />
-                      <span className="hidden sm:inline">Exit Cloud</span>
-                      <span className="sm:hidden">Exit</span>
-                    </div>
+                    <LogOut size={12} className="sm:size-[15px]" />
+                    <span>Exit</span>
                   </button>
                 </div>
               </div>
@@ -2038,17 +2037,17 @@ export default function App() {
               )}
             </div>
           ) : adminTab === "history" ? (
-            <div className="bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-              <h3 className="text-xl font-black mb-6 text-white tracking-tight flex items-center gap-3">
+            <div className="bg-slate-800 rounded-3xl p-4 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+              <h3 className="text-lg sm:text-xl font-black mb-4 sm:mb-6 text-white tracking-tight flex items-center gap-2.5 sm:gap-3">
                 <Clock className="text-indigo-400" /> Game History ({gameHistory.length})
               </h3>
               {gameHistory.length === 0 ? (
                 <div className="flex flex-col items-center justify-center flex-1 text-slate-500 gap-4">
-                   <Clock size={48} className="opacity-20" />
-                   <p className="font-bold">No completed games found yet.</p>
+                   <Clock size={40} className="opacity-20" />
+                   <p className="font-bold text-sm">No completed games found yet.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {gameHistory.map((game, i) => (
                     <div key={game.id || i} className="bg-slate-900 border border-slate-700 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col">
                       <div className="absolute top-0 left-0 w-full h-2" style={{backgroundColor: game.winnerColor || '#6366f1'}}></div>
@@ -2082,15 +2081,15 @@ export default function App() {
               )}
             </div>
           ) : adminTab === "docs" ? (
-            <div className="bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-6 text-slate-300">
-              <h3 className="text-xl font-black mb-2 text-white tracking-tight flex items-center gap-3">
+            <div className="bg-slate-800 rounded-3xl p-4 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 sm:gap-6 text-slate-300">
+              <h3 className="text-lg sm:text-xl font-black mb-1 sm:mb-2 text-white tracking-tight flex items-center gap-2.5 sm:gap-3">
                 <BookOpen className="text-indigo-400" /> Admin Guide & Rules Documentation
               </h3>
-              <p className="text-sm text-slate-400 -mt-2 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-400 sm:-mt-2 leading-relaxed">
                 Welcome to the official manual for Snakes & Ladders: Tree of Knowledge. Use this administrative console to configure board setups, review player lists, and monitor academic progress.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-2">
                 {/* Finish Line Rule */}
                 <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 flex flex-col gap-3">
                   <div className="flex items-center gap-2.5">
@@ -2145,10 +2144,10 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0 lg:shrink flex-1 min-h-0 overflow-y-auto lg:overflow-visible">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 flex-1 min-h-0 lg:overflow-hidden">
               
               {/* LEFT COLUMN: Setup & Questions */}
-              <div className="lg:col-span-1 flex flex-col gap-6 lg:overflow-y-auto lg:pr-2 custom-scrollbar">
+              <div className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:h-full lg:overflow-y-auto lg:pr-2 custom-scrollbar">
                 <div className="bg-slate-800 rounded-3xl p-5 sm:p-6 border border-slate-700 shadow-xl flex flex-col shrink-0">
                   <h3 className="text-sm font-black mb-4 text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2 shrink-0">
                     <span className="w-2 h-2 rounded-full bg-indigo-500"></span> Question Bank
@@ -2328,7 +2327,7 @@ export default function App() {
               </div>
 
               {/* RIGHT COLUMN: Live Dashboard & Ranking & Requests */}
-              <div className="lg:col-span-2 flex flex-col gap-6 lg:overflow-y-auto lg:pr-2 custom-scrollbar">
+              <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:h-full lg:overflow-y-auto lg:pr-2 custom-scrollbar">
 
                 {/* SUPER ADMIN PANEL */}
                 {isSuperAdmin && (
@@ -2453,48 +2452,52 @@ export default function App() {
                   ) : (
                     <div className="flex flex-col gap-6 flex-1">
                                     {/* Connection Stats */}
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                         <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50 flex flex-col relative group">
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Room Code</span>
-                           <div className="flex items-center gap-2">
-                             <span className="text-lg font-black text-white font-mono tracking-widest">{gameId || "LOCAL"}</span>
+                      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
+                         <div className="bg-slate-900 rounded-xl p-3 xs:p-4 border border-slate-700/50 flex flex-col relative group justify-between min-h-[76px] sm:min-h-0">
+                           <span className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Room Code</span>
+                           <div className="flex items-center gap-1.5 sm:gap-2 justify-between w-full">
+                             <span className="text-sm xs:text-base sm:text-lg font-black text-white font-mono tracking-widest">{gameId || "LOCAL"}</span>
                              {gameId && (
-                               <div className="flex items-center gap-2">
+                               <div className="flex items-center gap-1.5 shrink-0">
                                  <button 
                                    onClick={handleCopyCode} 
                                    className="text-slate-400 hover:text-white transition-colors"
                                    title="Copy Room Code"
                                  >
-                                   {copiedCode ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                                   {copiedCode ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                                  </button>
                                  <button 
                                    onClick={handleCopyLink} 
                                    className="text-slate-400 hover:text-white transition-colors"
                                    title="Copy Shareable Link"
                                  >
-                                   {copiedLink ? <Check size={16} className="text-emerald-400" /> : <Share2 size={16} />}
+                                   {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
                                  </button>
                                </div>
                              )}
                            </div>
                          </div>
-                         <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50 flex flex-col">
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">State</span>
-                           <span className="text-lg font-black text-emerald-400 capitalize">{gameState}</span>
+                         
+                         <div className="bg-slate-900 rounded-xl p-3 xs:p-4 border border-slate-700/50 flex flex-col justify-between min-h-[76px] sm:min-h-0">
+                           <span className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 block">State</span>
+                           <span className="text-sm xs:text-base sm:text-lg font-black text-emerald-400 capitalize truncate">{gameState}</span>
                          </div>
-                         <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50 flex flex-col">
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Total Teams</span>
-                           <span className="text-lg font-black text-white">{players.length || Object.keys(lobbyData).length}</span>
+                         
+                         <div className="bg-slate-900 rounded-xl p-3 xs:p-4 border border-slate-700/50 flex flex-col justify-between min-h-[76px] sm:min-h-0">
+                           <span className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Total Teams</span>
+                           <span className="text-sm xs:text-base sm:text-lg font-black text-white">{players.length || Object.keys(lobbyData).length}</span>
                          </div>
-                         <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50 flex flex-col">
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Time Left</span>
-                           <span className="text-lg font-black text-amber-400">
+                         
+                         <div className="bg-slate-900 rounded-xl p-3 xs:p-4 border border-slate-700/50 flex flex-col justify-between min-h-[76px] sm:min-h-0">
+                           <span className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Time Left</span>
+                           <span className="text-sm xs:text-base sm:text-lg font-black text-amber-400">
                              {timeLeft !== null ? `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, "0")}` : "∞"}
                            </span>
                          </div>
-                         <div className="bg-slate-900 rounded-xl p-4 border border-slate-700/50 flex flex-col">
-                           <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Controls</span>
-                           <div className="flex gap-2">
+                         
+                         <div className="bg-slate-900 rounded-xl p-3 xs:p-4 border border-slate-700/50 flex flex-col justify-between min-h-[76px] sm:min-h-0 col-span-2 xs:col-span-1">
+                           <span className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Controls</span>
+                           <div className="flex gap-1.5 items-center w-full mt-0.5">
                              {gameState === "playing" ? (
                                <button 
                                  onClick={async () => {
@@ -2502,14 +2505,14 @@ export default function App() {
                                       await updateDoc(doc(db, "games", gameId), { gameState: "finished" });
                                    }
                                  }}
-                                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg py-1 text-[10px] font-black uppercase tracking-wider"
+                                 className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 hover:text-red-400 border border-red-500/20 rounded-lg py-1.5 text-[9px] font-black uppercase tracking-wider transition-all"
                                >
                                  Finish
                                </button>
                              ) : (
                                <button 
                                  onClick={startMultiplayerGame}
-                                 className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg py-1 text-[10px] font-black uppercase tracking-wider"
+                                 className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 hover:text-emerald-400 border border-emerald-500/20 rounded-lg py-1.5 text-[9px] font-black uppercase tracking-wider transition-all"
                                >
                                  Start
                                </button>
@@ -2521,10 +2524,10 @@ export default function App() {
                                     setGameId(null);
                                  }
                                }}
-                               className="bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg px-2 py-1 flex items-center justify-center shrink-0"
+                               className="bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-red-400 rounded-lg p-1.5 flex items-center justify-center shrink-0 transition-colors"
                                title="Delete Room"
                              >
-                               <X size={14} />
+                               <X size={13} />
                              </button>
                            </div>
                          </div>
@@ -2606,7 +2609,12 @@ export default function App() {
                                      {idx + 1}
                                      <div className={`absolute rounded-full shadow-inner ${isFullscreen ? '-bottom-1.5 -right-1.5 w-6 h-6 border-[3px] border-white' : '-bottom-1 -right-1 w-3.5 h-3.5 border-2 border-slate-800'}`} style={{backgroundColor: p.color.hex}}></div>
                                    </div>
-                                   <span className={`font-black drop-shadow-sm py-1 px-2 sm:px-3 rounded-lg ${isFullscreen ? 'text-3xl sm:text-4xl lg:text-5xl bg-white/50 text-slate-800 shadow-sm border border-white/60' : 'text-sm sm:text-base text-white bg-black/20'}`}>{p.name || `Team ${p.id+1}`} {p.isCpu ? '(CPU)' : ''}</span>
+                                   <span 
+                                     className={`font-black drop-shadow-sm py-1 px-1.5 sm:px-3 rounded-lg truncate ${isFullscreen ? 'text-2xl sm:text-4xl lg:text-5xl bg-white/50 text-slate-800 shadow-sm border border-white/60' : 'text-[11px] sm:text-sm md:text-base text-white bg-black/20 max-w-[80px] xs:max-w-[125px] sm:max-w-[180px] md:max-w-none'}`}
+                                     title={p.name || `Team ${p.id+1}`}
+                                   >
+                                     {p.name || `Team ${p.id+1}`}{p.isCpu ? ' (CPU)' : ''}
+                                   </span>
                                  </div>
                                  <div className="z-10 relative flex items-center gap-4 sm:gap-6 pointer-events-none">
                                     {currentTurn === p.id && gameState === "playing" && (
@@ -2614,9 +2622,9 @@ export default function App() {
                                          Current Turn
                                        </span>
                                     )}
-                                    <div className={`flex flex-col items-end py-1 sm:py-2 px-3 sm:px-5 rounded-xl ${isFullscreen ? 'bg-sky-100/80 border border-sky-200 shadow-inner' : 'bg-black/20'}`}>
-                                      <span className={`font-black leading-none ${isFullscreen ? 'text-5xl sm:text-6xl text-sky-800 drop-shadow-sm' : 'text-lg text-indigo-300'}`}>{p.pos}</span>
-                                      <span className={`font-bold uppercase tracking-wider ${isFullscreen ? 'text-sm sm:text-lg text-sky-600/80 mt-1' : 'text-[9px] text-slate-400'}`}>Tile</span>
+                                    <div className={`flex flex-col items-center justify-center py-1 px-2.5 sm:px-4 rounded-xl min-w-[40px] sm:min-w-[48px] ${isFullscreen ? 'bg-sky-100/80 border border-sky-200 shadow-inner' : 'bg-black/20'}`}>
+                                      <span className={`font-black leading-none ${isFullscreen ? 'text-5xl sm:text-6xl text-sky-800 drop-shadow-sm' : 'text-sm sm:text-lg text-indigo-300'}`}>{p.pos}</span>
+                                      <span className={`font-bold uppercase tracking-wider ${isFullscreen ? 'text-sm sm:text-lg text-sky-600/80 mt-1' : 'text-[8px] text-slate-400 mt-0.5'}`}>Tile</span>
                                     </div>
                                  </div>
                                </div>
