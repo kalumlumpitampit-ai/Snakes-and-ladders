@@ -2670,32 +2670,78 @@ export default function App() {
                             <div className="font-black text-indigo-900 text-4xl xs:text-5xl mb-6 tracking-widest tabular-nums">{gameId}</div>
                             
                             <div className="flex flex-col gap-5 max-w-sm mx-auto">
-                              <input
-                                type="text"
-                                value={lobbyData[localPlayerId]?.name || ""}
-                                onChange={(e) => updateLobbyItem({ name: e.target.value })}
-                                placeholder="Enter Team Name..."
-                                className="w-full text-center text-base xs:text-lg sm:text-sm md:text-base font-bold px-6 py-4 bg-white border-2 border-indigo-100 rounded-2xl focus:outline-none focus:border-indigo-400 shadow-sm transition-all"
-                              />
-                              
-                              <div className="bg-white/85 p-5 rounded-2xl border border-indigo-50">
-                                <p className="text-xs xs:text-sm text-indigo-500 mb-4 font-black uppercase tracking-widest">Choose Your Color</p>
-                                <div className="flex justify-center flex-wrap gap-2.5">
-                                  {colors.map((c, i) => {
-                                    const isSelected = lobbyData[localPlayerId]?.colorIndex === i;
-                                    const isTaken = Object.entries(lobbyData).some(([uid, data]: [string, any]) => uid !== localPlayerId && data.colorIndex === i);
-                                    return (
-                                      <button
-                                        key={i}
-                                        disabled={isTaken}
-                                        onClick={() => updateLobbyItem({ colorIndex: i })}
-                                        className={`w-11 h-11 rounded-full border-4 transition-all ${isSelected ? "scale-115 shadow-lg border-white ring-4 ring-indigo-200" : "border-white/50"} ${isTaken ? "opacity-20 cursor-not-allowed scale-90" : "hover:scale-115 shadow-sm"}`}
-                                        style={{ backgroundColor: c.hex }}
-                                      />
-                                    )
-                                  })}
-                                </div>
-                              </div>
+                              {isAdminState ? (
+                                <>
+                                  <div className="bg-slate-900/10 p-5 rounded-3xl border border-dashed border-slate-300 text-slate-800 flex flex-col items-center text-center gap-3">
+                                    <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-lg">
+                                      <ShieldAlert size={28} />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-extrabold text-sm uppercase tracking-wider text-slate-900">Game Master Active</h4>
+                                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                                        You are supervising this match. Share this Room Code with players to let them join.
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="bg-white/95 p-5 rounded-2xl border border-indigo-100 shadow-sm flex flex-col items-start gap-2.5 text-left">
+                                    <span className="text-xs font-black uppercase tracking-wider text-indigo-600 block">Joined Players ({Object.keys(lobbyData).length})</span>
+                                    {Object.keys(lobbyData).length > 0 ? (
+                                      <div className="flex gap-2 flex-wrap w-full mt-1.5">
+                                        {Object.values(lobbyData).map((p: any, idx) => (
+                                          <div key={idx} className="flex items-center gap-2 bg-indigo-50/70 px-3 py-1.5 rounded-xl border border-indigo-100 shadow-sm">
+                                            <div className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm" style={{backgroundColor: p.colorIndex !== null ? colors[p.colorIndex].hex : '#cbd5e1'}}></div>
+                                            <span className="text-xs font-bold text-indigo-950">{p.name || `Player ${idx+1}`}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-slate-400 italic mt-1 leading-normal">
+                                        No players have joined yet. Waiting for participants to enter with code...
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <button
+                                    onClick={() => {
+                                      audio.init();
+                                      setLocation("/admin");
+                                    }}
+                                    className="w-full bg-slate-900 hover:bg-black text-white font-black py-4.5 rounded-2xl transition-all shadow-xl uppercase tracking-widest text-sm flex items-center justify-center gap-2.5 hover:scale-102 active:scale-98 select-none"
+                                  >
+                                    Control Center <ChevronRight size={18} />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="text"
+                                    value={lobbyData[localPlayerId]?.name || ""}
+                                    onChange={(e) => updateLobbyItem({ name: e.target.value })}
+                                    placeholder="Enter Team Name..."
+                                    className="w-full text-center text-base xs:text-lg sm:text-sm md:text-base font-bold px-6 py-4 bg-white border-2 border-indigo-100 rounded-2xl focus:outline-none focus:border-indigo-400 shadow-sm transition-all"
+                                  />
+                                  
+                                  <div className="bg-white/85 p-5 rounded-2xl border border-indigo-50">
+                                    <p className="text-xs xs:text-sm text-indigo-500 mb-4 font-black uppercase tracking-widest">Choose Your Color</p>
+                                    <div className="flex justify-center flex-wrap gap-2.5">
+                                      {colors.map((c, i) => {
+                                        const isSelected = lobbyData[localPlayerId]?.colorIndex === i;
+                                        const isTaken = Object.entries(lobbyData).some(([uid, data]: [string, any]) => uid !== localPlayerId && data.colorIndex === i);
+                                        return (
+                                          <button
+                                            key={i}
+                                            disabled={isTaken}
+                                            onClick={() => updateLobbyItem({ colorIndex: i })}
+                                            className={`w-11 h-11 rounded-full border-4 transition-all ${isSelected ? "scale-115 shadow-lg border-white ring-4 ring-indigo-200" : "border-white/50"} ${isTaken ? "opacity-20 cursor-not-allowed scale-90" : "hover:scale-115 shadow-sm"}`}
+                                            style={{ backgroundColor: c.hex }}
+                                          />
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                               
                               <div className="flex flex-col gap-2 mt-2">
                                 {isHost ? (
@@ -2718,6 +2764,27 @@ export default function App() {
                               </div>
                             </div>
                           </div>
+                        </div>
+                      ) : isAdminState ? (
+                        <div className="flex flex-col gap-6 w-full px-1">
+                          <div className="bg-slate-900/10 p-5 rounded-3xl border border-dashed border-slate-300 text-slate-800 flex flex-col items-center text-center gap-3">
+                            <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-lg">
+                              <ShieldAlert size={28} />
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-sm uppercase tracking-wider text-slate-900">Game Master Active</h4>
+                              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                                You are signed in as an Admin. You cannot join sessions as a player, but you can create real-time multiplayer rooms for others.
+                              </p>
+                            </div>
+                          </div>
+
+                          <button 
+                            onClick={createGame} 
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-5 rounded-2xl transition-all shadow-xl hover:shadow-indigo-300/45 uppercase tracking-widest text-base xs:text-lg flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer select-none"
+                          >
+                            Host New Game <Plus size={20} />
+                          </button>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-6 w-full px-1">
