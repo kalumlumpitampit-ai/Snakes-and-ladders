@@ -969,18 +969,18 @@ export default function App() {
   }, [questionBank]);
 
   const [teacherOpen, setTeacherOpen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [adminTab, setAdminTab] = useState<"dashboard" | "history" | "docs">("dashboard");
   const [gameHistory, setGameHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    if (showHistory && isAdminState && user) {
+    if (adminTab === "history" && isAdminState && user) {
       const q = query(collection(db, "game_history"), where("hostId", "==", user.uid));
       getDocs(q).then(snap => {
         const h = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => b.completedAt - a.completedAt);
         setGameHistory(h);
       }).catch(e => console.error(e));
     }
-  }, [showHistory, isAdminState, user]);
+  }, [adminTab, isAdminState, user]);
   const [msgModal, setMsgModal] = useState({
     open: false,
     title: "",
@@ -1614,14 +1614,40 @@ export default function App() {
   const executeMove = async (player: Player, roll: number) => {
     let pId = player.id;
     let p = playersRef.current.find((x) => x.id === pId)!;
-    let targetPos = Math.min(MAX_TILE, p.pos + roll);
+    let rawTarget = p.pos + roll;
+    let targetPos = rawTarget;
+    let path: number[] = [];
+
+    if (rawTarget > MAX_TILE) {
+      let overflow = rawTarget - MAX_TILE;
+      targetPos = MAX_TILE - overflow;
+      
+      if (!multiplayerSyncingRef.current) {
+        await showMessage(
+          "Too High! 🛡️",
+          `You must land EXACTLY on tile 100 to win! Bouncing back ${overflow} steps to tile ${targetPos}.`
+        );
+      }
+      if (!gameActiveRef.current) return;
+
+      for (let i = p.pos + 1; i <= MAX_TILE; i++) {
+        path.push(i);
+      }
+      for (let i = MAX_TILE - 1; i >= targetPos; i--) {
+        path.push(i);
+      }
+    } else {
+      for (let i = p.pos + 1; i <= targetPos; i++) {
+        path.push(i);
+      }
+    }
 
     await sleep(500);
 
-    for (let i = p.pos + 1; i <= targetPos; i++) {
+    for (const step of path) {
       if (!gameActiveRef.current) return;
-      setStepCount({ id: pId, count: i });
-      updatePlayerPos(pId, i);
+      setStepCount({ id: pId, count: step });
+      updatePlayerPos(pId, step);
       if (!multiplayerSyncingRef.current) audio.play("move");
       await sleep(500); // Perfect, clear counting steps mapped to 0.4s transition
     }
@@ -1721,11 +1747,36 @@ export default function App() {
 
       p = playersRef.current.find((x) => x.id === pId)!;
       if (answeredCorrectly) {
-        let newPos = Math.min(MAX_TILE, p.pos + 3);
-        for (let i = p.pos + 1; i <= newPos; i++) {
+        let rawNewPos = p.pos + 3;
+        let newPos = rawNewPos;
+        let bonusPath: number[] = [];
+
+        if (rawNewPos > MAX_TILE) {
+          let overflow = rawNewPos - MAX_TILE;
+          newPos = MAX_TILE - overflow;
+          if (!multiplayerSyncingRef.current) {
+            await showMessage(
+              "Too High! 🛡️",
+              `Bonus movement exceeds tile 100! Bouncing back ${overflow} steps to tile ${newPos}.`
+            );
+          }
           if (!gameActiveRef.current) return;
-          setStepCount({ id: pId, count: i });
-          updatePlayerPos(pId, i);
+          for (let i = p.pos + 1; i <= MAX_TILE; i++) {
+            bonusPath.push(i);
+          }
+          for (let i = MAX_TILE - 1; i >= newPos; i--) {
+            bonusPath.push(i);
+          }
+        } else {
+          for (let i = p.pos + 1; i <= newPos; i++) {
+            bonusPath.push(i);
+          }
+        }
+
+        for (const step of bonusPath) {
+          if (!gameActiveRef.current) return;
+          setStepCount({ id: pId, count: step });
+          updatePlayerPos(pId, step);
           if (!multiplayerSyncingRef.current) audio.play("move");
           await sleep(500);
         }
@@ -1784,16 +1835,40 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 pr-10 sm:pr-0">
                   <button
-                    onClick={() => setShowHistory(!showHistory)}
-                    className="p-1.5 sm:px-4 sm:py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors font-bold text-[10px] sm:text-xs"
-                    title={showHistory ? "View Live Dashboard" : "View Game History"}
+                    onClick={() => setAdminTab("dashboard")}
+                    className={`p-1.5 sm:px-4 sm:py-2 rounded-xl transition-all font-bold text-[10px] sm:text-xs border flex items-center gap-1 sm:gap-2 ${
+                      adminTab === "dashboard"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
+                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
+                    }`}
+                    title="View Live Game controls"
                   >
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <Clock size={14} className="sm:size-[16px]" />
-                      <span className="hidden sm:inline">{showHistory ? "Dashboard" : "History"}</span>
-                      {!showHistory && <span className="sm:hidden">Hist</span>}
-                      {showHistory && <span className="sm:hidden">Dash</span>}
-                    </div>
+                    <Settings size={14} className="sm:size-[16px]" />
+                    <span>Dashboard</span>
+                  </button>
+                  <button
+                    onClick={() => setAdminTab("history")}
+                    className={`p-1.5 sm:px-4 sm:py-2 rounded-xl transition-all font-bold text-[10px] sm:text-xs border flex items-center gap-1 sm:gap-2 ${
+                      adminTab === "history"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
+                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
+                    }`}
+                    title="View Saved Scores & Logs"
+                  >
+                    <Clock size={14} className="sm:size-[16px]" />
+                    <span>History</span>
+                  </button>
+                  <button
+                    onClick={() => setAdminTab("docs")}
+                    className={`p-1.5 sm:px-4 sm:py-2 rounded-xl transition-all font-bold text-[10px] sm:text-xs border flex items-center gap-1 sm:gap-2 ${
+                      adminTab === "docs"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
+                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-transparent hover:text-white"
+                    }`}
+                    title="View Game Rules & Docs"
+                  >
+                    <BookOpen size={14} className="sm:size-[16px]" />
+                    <span>Guide & Docs</span>
                   </button>
                   <button
                     onClick={adminLogout}
@@ -1962,7 +2037,7 @@ export default function App() {
                 </>
               )}
             </div>
-          ) : showHistory ? (
+          ) : adminTab === "history" ? (
             <div className="bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col">
               <h3 className="text-xl font-black mb-6 text-white tracking-tight flex items-center gap-3">
                 <Clock className="text-indigo-400" /> Game History ({gameHistory.length})
@@ -2005,6 +2080,69 @@ export default function App() {
                   ))}
                 </div>
               )}
+            </div>
+          ) : adminTab === "docs" ? (
+            <div className="bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-xl flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-6 text-slate-300">
+              <h3 className="text-xl font-black mb-2 text-white tracking-tight flex items-center gap-3">
+                <BookOpen className="text-indigo-400" /> Admin Guide & Rules Documentation
+              </h3>
+              <p className="text-sm text-slate-400 -mt-2 leading-relaxed">
+                Welcome to the official manual for Snakes & Ladders: Tree of Knowledge. Use this administrative console to configure board setups, review player lists, and monitor academic progress.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                {/* Finish Line Rule */}
+                <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400">
+                      <CheckCircle2 size={20} />
+                    </div>
+                    <h4 className="font-extrabold text-white text-sm uppercase tracking-wide">Exact - 100 Finisher Rule</h4>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    To declare a game winner, players must reach tile <strong>100</strong> exactly. If a dice roll or question reward is too high and would take the player past tile 100, they will <strong>bounce back</strong> by the excess amount. For example, a player at tile 98 rolling a 4 (taking them to 102) will move 2 steps forward to 100, then rebound 2 steps backward to end on tile 98.
+                  </p>
+                </div>
+
+                {/* Score Log & Player Names */}
+                <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">
+                      <Clock size={20} />
+                    </div>
+                    <h4 className="font-extrabold text-white text-sm uppercase tracking-wide">Persistent Game & Score Logs</h4>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    All player names, customized color codes, match durations, and final rank scores (their final tile positions on the board) are safely synchronized to the secure Cloud Firestore <code>game_history</code> Collection. Auditing complete chronologies in the History panel allows admins to trace every player's exact score.
+                  </p>
+                </div>
+
+                {/* Dynamic Trees */}
+                <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-amber-500/10 rounded-xl text-amber-400">
+                      <HelpCircle size={20} />
+                    </div>
+                    <h4 className="font-extrabold text-white text-sm uppercase tracking-wide">The Tree of Knowledge</h4>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Landing on a green <strong>Tree of Knowledge</strong> triggers a dynamic question from the Admin's customized Question Bank. Correct inputs propel players forward by 3 bonus tiles, whereas incorrect answers invoke a 1-tile deduction, with all movements subject to the Exact-100 win limit.
+                  </p>
+                </div>
+
+                {/* Real-time Surveillance */}
+                <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-violet-500/10 rounded-xl text-violet-400">
+                      <Users size={20} />
+                    </div>
+                    <h4 className="font-extrabold text-white text-sm uppercase tracking-wide">Live Dashboard Monitoring</h4>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                     As the host, you can monitor ongoing lobbies with players entering their team name/colors using the generated room codes, adjust round-timer limits, and customize the question pools dynamically.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0 lg:shrink flex-1 min-h-0 overflow-y-auto lg:overflow-visible">
